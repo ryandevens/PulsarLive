@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<JUCERPROJECT id="R51DgZ" name="PulsarLive" projectType="audioplug" useAppConfig="0"
+              addUsingNamespaceToJuceHeader="1" displaySplashScreen="1" headerPath="/Users/mustech/JUCE_LIBRARIES/pedal/include;"
+              companyName="Pulsaret" pluginFormats="buildAU,buildStandalone,buildVST3"
+              pluginCharacteristicsValue="pluginIsSynth,pluginProducesMidiOut,pluginWantsMidiIn">
+  <MAINGROUP id="nkU8uP" name="PulsarLive">
+    <GROUP id="{A69DA987-8461-8468-488E-C2F180B5279F}" name="Source">
+      <GROUP id="{559F689A-75F8-569F-9AF0-641804D72986}" name="LookAndFeel">
+        <FILE id="AvLHQe" name="MixFeel.cpp" compile="1" resource="0" file="Source/MixFeel.cpp"/>
+        <FILE id="YQF01P" name="MixFeel.h" compile="0" resource="0" file="Source/MixFeel.h"/>
+        <FILE id="dg9YnM" name="NameFeel.cpp" compile="1" resource="0" file="Source/NameFeel.cpp"/>
+        <FILE id="l7CMK6" name="NameFeel.h" compile="0" resource="0" file="Source/NameFeel.h"/>
+      </GROUP>
+      <GROUP id="{F7B723AF-F490-924D-3FFA-B5333D1F27A7}" name="Pulsaret">
+        <FILE id="TcWpBi" name="Pulsaret.cpp" compile="1" resource="0" file="Source/Pulsaret.cpp"/>
+        <FILE id="BeDqAd" name="Pulsaret.h" compile="0" resource="0" file="Source/Pulsaret.h"/>
+        <FILE id="pXhZE7" name="PulsaretTable.cpp" compile="1" resource="0"
+              file="Source/PulsaretTable.cpp"/>
+        <FILE id="KfFAKM" name="PulsaretTable.h" compile="0" resource="0" file="Source/PulsaretTable.h"/>
+        <FILE id="UnMptm" name="PulsaretVisualizer.cpp" compile="1" resource="0"
+              file="Source/PulsaretVisualizer.cpp"/>
+        <FILE id="x5DiGP" name="PulsaretVisualizer.h" compile="0" resource="0"
+              file="Source/PulsaretVisualizer.h"/>
+      </GROUP>
+      <GROUP id="{574FF326-F770-E5CC-5282-1B6A57128C92}" name="Envelope">
+        <FILE id="CrHWOC" name="Envelope.cpp" compile="1" resource="0" file="Source/Envelope.cpp"/>
+        <FILE id="oXSnXg" name="Envelope.h" compile="0" resource="0" file="Source/Envelope.h"/>
+        <FILE id="G05CYx" name="EnvelopeControlPoint.h" compile="0" resource="0"
+              file="Source/EnvelopeControlPoint.h"/>
+        <FILE id="v107X2" name="EnvelopeVisualizer.cpp" compile="1" resource="0"
+              file="Source/EnvelopeVisualizer.cpp"/>
+        <FILE id="W6DGb5" name="EnvelopeVisualizer.h" compile="0" resource="0"
+              file="Source/EnvelopeVisualizer.h"/>
+      </GROUP>
+      <GROUP id="{697D4BB6-185D-8BAF-26F2-C4EAC5F64F1D}" name="Pulsar Train">
+        <FILE id="WYPOo2" name="OwnedPulsaret.cpp" compile="1" resource="0"
+              file="Source/OwnedPulsaret.cpp"/>
+        <FILE id="ZCYy1E" name="OwnedPulsaret.h" compile="0" resource="0" file="Source/OwnedPulsaret.h"/>
+        <FILE id="INFnU5" name="PulsarTrain.cpp" compile="1" resource="0" file="Source/PulsarTrain.cpp"/>
+        <FILE id="Tark8y" name="PulsarTrain.h" compile="0" resource="0" file="Source/PulsarTrain.h"/>
+      </GROUP>
+      <GROUP id="{29A031DC-BE0D-E33C-C800-5230B9DD69A8}" name="WaveTable">
+        <FILE id="lOnLuS" name="WaveTableVisualizer.cpp" compile="1" resource="0"
+              file="Source/WaveTableVisualizer.cpp"/>
+        <FILE id="iWJopX" name="WaveTableVisualizer.h" compile="0" resource="0"
+              file="Source/WaveTableVisualizer.h"/>
+      </GROUP>
+      <GROUP id="{CCEFD832-7A1A-73D1-EBDB-744774589619}" name="Processor">
+        <FILE id="ROerYT" name="PluginEditor.cpp" compile="1" resource="0"
+              file="Source/PluginEditor.cpp"/>
+        <FILE id="vkC7fi" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+        <FILE id="kcqZn1" name="PluginProcessor.cpp" compile="1" resource="0"
+              file="Source/PluginProcessor.cpp"/>
+        <FILE id="JM5PXm" name="PluginProcessor.h" compile="0" resource="0"
+              file="Source/PluginProcessor.h"/>
+      </GROUP>
+      <GROUP id="{B8C9FCDF-5537-30CB-14C8-24624B1D469B}" name="Synth Engine">
+        <FILE id="laDSKA" name="PulsarSynthSound.h" compile="0" resource="0"
+              file="Source/PulsarSynthSound.h"/>
+        <FILE id="cof4Wq" name="PulsarSynthVoice.cpp" compile="1" resource="0"
+              file="Source/PulsarSynthVoice.cpp"/>
+        <FILE id="S92Ggx" name="PulsarSynthVoice.h" compile="0" resource="0"
+              file="Source/PulsarSynthVoice.h"/>
+        <FILE id="n5bhzQ" name="PulsarSynthesiser.cpp" compile="1" resource="0"
+              file="Source/PulsarSynthesiser.cpp"/>
+        <FILE id="RvVqpT" name="PulsarSynthesiser.h" compile="0" resource="0"
+              file="Source/PulsarSynthesiser.h"/>
+      </GROUP>
+    </GROUP>
+  </MAINGROUP>
+  <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
+  <EXPORTFORMATS>
+    <XCODE_MAC targetFolder="Builds/MacOSX" extraLinkerFlags="/Users/mustech/JUCE_LIBRARIES/pedal/build/lib/libpedal.a">
+      <CONFIGURATIONS>
+        <CONFIGURATION isDebug="1" name="Debug" targetName="PulsarLive" osxCompatibility="10.12 SDK"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="PulsarLive" osxCompatibility="10.12 SDK"/>
+      </CONFIGURATIONS>
+      <MODULEPATHS>
+        <MODULEPATH id="juce_audio_basics" path="../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_devices" path="../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_formats" path="../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_plugin_client" path="../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_processors" path="../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_audio_utils" path="../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_core" path="../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_data_structures" path="../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_events" path="../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_graphics" path="../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_basics" path="../../../../Applications/JUCE/modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../../../Applications/JUCE/modules"/>
+      </MODULEPATHS>
+    </XCODE_MAC>
+  </EXPORTFORMATS>
+  <MODULES>
+    <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_plugin_client" showAllCode="1" useLocalCopy="0"
+            useGlobalPath="1"/>
+    <MODULE id="juce_audio_processors" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_audio_utils" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_core" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_data_structures" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+  </MODULES>
+  <LIVE_SETTINGS>
+    <OSX/>
+  </LIVE_SETTINGS>
+</JUCERPROJECT>
