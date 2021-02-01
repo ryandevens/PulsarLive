@@ -56,7 +56,7 @@ private:
     
     //std::unique_ptr<juce::ComboBox> box;
     std::unique_ptr<PulsaretVisualizer> pulsaretVisualizer;
-    std::unique_ptr<WaveTableVisualizer> envVisualizer;
+    //std::unique_ptr<WaveTableVisualizer> envVisualizer;
     
     std::unique_ptr<juce::Slider>   ampSlider;
     std::unique_ptr<Label>          ampLabel;

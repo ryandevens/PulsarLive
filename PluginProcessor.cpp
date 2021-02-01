@@ -19,9 +19,7 @@ PulsarAudioProcessor::PulsarAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       ),
-pulsarTrain(pulsaretArray, pulsaretArray2, mFundFreq, fundRange, mFundRand, fundIsSpread, mFormFreq, formRange, mFormRand, formIsSpread, mFormFreq2, formRange2, mFormRand2, formIsSpread2, panL, panR, panRange, panRand, panIsSpread, mAmp, ampRange, mAmpRand, ampIsSpread, intermittance, waveType, waveRange, waveRand, waveIsSpread),
-e(*this, nullptr, "Parameters", createParams())
+                       ), pulsarTrain(pulsaretArray, pulsaretArray2), e(*this, nullptr, "Parameters", createParams())
 #endif
 {
     e.state.addListener (this);
@@ -113,23 +111,12 @@ void PulsarAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
     }
     pulsarTrain.prepare(sampleRate);
     
-    fundRange.setStart(1);
-    fundRange.setEnd(1000);
-    formRange.setStart(100);
-    formRange.setEnd(16000);
-    formRange2.setStart(100);
-    formRange2.setEnd(16000);
-    panRange.setStart(0);
-    panRange.setStart(100);
-    waveRange.setStart(0);
-    waveRange.setEnd(100);
-    ampRange.setStart(0);
-    ampRange.setEnd(100);
+    
     
     update();
 
-    pulsarSynth.prepare(sampleRate, samplesPerBlock);
-    messageCollector.reset(sampleRate);
+    //pulsarSynth.prepare(sampleRate, samplesPerBlock);
+    //messageCollector.reset(sampleRate);
 }
 
 void PulsarAudioProcessor::releaseResources()
@@ -173,14 +160,33 @@ void PulsarAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     if (mustUpdateProcessing)
     {
         update();
-
     }
-
     pulsarTrain.generateNextBlock(buffer);
     
-    messageCollector.removeNextBlockOfMessages (midiMessages, buffer.getNumSamples());
-    pulsarSynth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    
+    for (auto it = midiMessages.findNextSamplePosition (0); it != midiMessages.cend(); ++it)
+    {
+        const auto metadata = *it;
+        
+        if (metadata.samplePosition >= buffer.getNumSamples())
+            break;
+        
+        auto message = metadata.getMessage();
+        
+        if (message.isNoteOn())
+        {
+            pulsarTrain.triggerEnv();
+            
+        }
+        if (message.isNoteOff())
+            pulsarTrain.triggerRelease();
+    }
+}
 
+
+void PulsarAudioProcessor::handleMidi(juce::MidiBuffer midiBuffer)
+{
+   
 }
 
 juce::AudioBuffer<float>& PulsarAudioProcessor::getEnvBuffer()
@@ -223,199 +229,185 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 void PulsarAudioProcessor::setTrainRunning()
 {
-
-    pulsarTrain.triggerEnv();
-    trainIsRunning = true;
+//
+//    pulsarTrain.triggerEnv();
+//    trainIsRunning = true;
 }
 
 void PulsarAudioProcessor::setTrainStopped()
 {
-    pulsarTrain.triggerRelease();
-    trainIsRunning = false;
+//    pulsarTrain.triggerRelease();
+//    trainIsRunning = false;
 }
 
 void PulsarAudioProcessor::update()
 {
     mustUpdateProcessing = false;
-    updateFund();
-    updateForm();
-    updateForm2();
-    updateWave();
-    updatePan();
-    updateAmp();
-}
-
-
-
-void PulsarAudioProcessor::updateFund()
-{
-    mFundFreq = *e.getRawParameterValue("Fundamental Freq");
-    mFundSpread = *e.getRawParameterValue("Fundamental Spread");
-    mFundRand = *e.getRawParameterValue("Fundamental Random");
     
-    width = *e.getRawParameterValue("Width");
-
+    auto fund = e.getRawParameterValue("Fundamental Freq");
+    auto fSpread = e.getRawParameterValue("Fundamental Spread");
+    auto fRand = e.getRawParameterValue("Fundamental Random");
+    auto foFreq = e.getRawParameterValue("Formant Freq");
+    auto foSpread = e.getRawParameterValue("Formant Spread");
+    auto foRand = e.getRawParameterValue("Formant Random");
+    auto foFreq2 = e.getRawParameterValue("Formant Freq2");
+    auto foSpread2 = e.getRawParameterValue("Formant Spread2");
+    auto foRand2 = e.getRawParameterValue("Formant Random2");
+    
+    
+    auto panR = e.getRawParameterValue("Pan");
+    auto panSpread = e.getRawParameterValue("Pan Spread");
+    auto panRand = e.getRawParameterValue("Pan Random");
+    auto mAmp = e.getRawParameterValue("Amp");
+    auto mAmpSpread = e.getRawParameterValue("Amp Spread");
+    auto mAmpRand = e.getRawParameterValue("Amp Random");
+    
+    
+    auto inter = e.getRawParameterValue("Intermittance");
+    
     auto atk = e.getRawParameterValue("Attack");
     auto dec = e.getRawParameterValue("Decay");
     auto sus = e.getRawParameterValue("Sustain Level");
     auto rel = e.getRawParameterValue("Release");
+    auto width = e.getRawParameterValue("Width");
     
-    pulsarTrain.setEnv(*atk, *dec, *sus, *rel);
+    auto trig = e.getRawParameterValue("Trigger");
     
-    if(mFundSpread.get() != 1)
-    {
-        fundIsSpread = true;
-        auto start = jlimit(1.f, 999.f, mFundFreq.get() / mFundSpread.get());
-        auto end = jlimit(2.f, 1000.f, mFundFreq.get() * mFundSpread.get());
-        
-        fundRange.setStart(start);
-        fundRange.setEnd(end);
-    }
-    else
-    {
-        fundIsSpread = false;
-    }
+    auto glideTime = e.getRawParameterValue("Glide Time");
     
-    pulsarTrain.setFrequencies(mFundFreq.get(), mFormFreq2.get(), mFormFreq.get());
-    pulsarTrain.setPulsaretWidth(width.get());
-    pulsarTrain.updateFundamental(); // this really exists just to change the period length
+    auto on = e.getRawParameterValue("Trigger On");
+    auto off = e.getRawParameterValue("Trigger Off");
+    
+    auto w = e.getRawParameterValue("Wave Type");
+    auto wSpread = e.getRawParameterValue("Wave Spread");
+    auto wRand = e.getRawParameterValue("Wave Random");
+    
+    waveType = *w;
+    waveSpread = *wSpread;
+    waveRand = *wRand;
+    
+    pulsarTrain.updateParams(*fund, *fSpread, *fRand, *foFreq, *foSpread, *foRand, *foFreq2, *foSpread2, *foRand2, *panR, *panSpread, *panRand, *mAmp, *mAmpSpread, *mAmpRand, *inter, *atk, *dec, *sus, *rel, *width, *glideTime, *on, *off, *trig, *w, *wSpread, *wRand);
+
+    //pulsaretTable.setTable(waveType.get() / 100.f);
 }
-
-void PulsarAudioProcessor::updateForm()
-{
-    mFormFreq = *e.getRawParameterValue("Formant Freq");
-    mFormSpread = *e.getRawParameterValue("Formant Spread");
-    mFormRand = *e.getRawParameterValue("Formant Random");
-
-    
-    if (mFormSpread.get() != 1)
-    {
-        formIsSpread = true;
-        auto start = jlimit(100.f, 15999.f, mFormFreq.get() / mFormSpread.get());
-        auto end = jlimit(101.f, 16000.f, mFormFreq.get() * mFormSpread.get());
-
-        formRange.setStart(start);
-        formRange.setEnd(end);
-    }
-    else
-    {
-        formIsSpread = false;
-    }
-
-    pulsarTrain.setFrequencies(mFundFreq.get(), mFormFreq2.get(), mFormFreq.get());
-}
-
-
-void PulsarAudioProcessor::updateForm2()
-{
-    mFormFreq2 = *e.getRawParameterValue("Formant Freq2");
-    mFormSpread2 = *e.getRawParameterValue("Formant Spread2");
-    mFormRand2 = *e.getRawParameterValue("Formant Random2");
-    
-    if (mFormSpread2.get() != 1)
-    {
-        formIsSpread2 = true;
-        auto start = jlimit(100.f, 15999.f, mFormFreq2.get() / mFormSpread2.get() );
-        auto end = jlimit(101.f, 16000.f, mFormFreq2.get() * mFormSpread2.get() );
-        formRange2.setStart(start);
-        formRange2.setEnd(end);
-    }
-    else
-    {
-        formIsSpread2 = false;
-    }
-    
-
-    pulsarTrain.setFrequencies(mFundFreq.get(), mFormFreq2.get(), mFormFreq.get());
-    //pulsarTrain.updateFormant();
-}
-
-
-void PulsarAudioProcessor::updatePan()
-{
-    panR = *e.getRawParameterValue("Pan");
-    panL = 100.f - panR.get();
-    panSpread = *e.getRawParameterValue("Pan Spread");
-    panRand = *e.getRawParameterValue("Pan Random");
-    
-    if(panSpread.get() != 0)
-    {
-        panIsSpread = true;
-        auto start = jlimit(0.f, 99.f, panR.get() - panSpread.get()/2);
-        auto end = jlimit(1.f, 100.f, panR.get() + panSpread.get()/2);
-        
-        panRange.setStart(start);
-        panRange.setEnd(end);
-    }
-    else
-    {
-        panIsSpread = false;
-    }
-
-}
+//void PulsarAudioProcessor::updateFund()
+//{
+//    
+//    
+//    pulsarTrain.setEnv(*atk, *dec, *sus, *rel);
+//    
+//    if(mFundSpread.get() != 1)
+//    {
+//        fundIsSpread = true;
+//        auto start = jlimit(1.f, 999.f, mFundFreq.get() / mFundSpread.get());
+//        auto end = jlimit(2.f, 1000.f, mFundFreq.get() * mFundSpread.get());
+//        
+//        fundRange.setStart(start);
+//        fundRange.setEnd(end);
+//    }
+//    else
+//    {
+//        fundIsSpread = false;
+//    }
+//    
+//    pulsarTrain.setFrequencies(mFundFreq.get(), mFormFreq2.get(), mFormFreq.get());
+//    pulsarTrain.setPulsaretWidth(width.get());
+//    pulsarTrain.updateFundamental(); // this really exists just to change the period length
+//}
+//
+//void PulsarAudioProcessor::updateForm()
+//{
+//    
+//
+//    if (mFormSpread.get() != 1)
+//    {
+//        formIsSpread = true;
+//        auto start = jlimit(100.f, 15999.f, mFormFreq.get() / mFormSpread.get());
+//        auto end = jlimit(101.f, 16000.f, mFormFreq.get() * mFormSpread.get());
+//
+//        formRange.setStart(start);
+//        formRange.setEnd(end);
+//    }
+//    else
+//    {
+//        formIsSpread = false;
+//    }
+//
+//    pulsarTrain.setFrequencies(mFundFreq.get(), mFormFreq2.get(), mFormFreq.get());
+//}
+//
+//
+//void PulsarAudioProcessor::updateForm2()
+//{
+//    
+//    
+//    if (mFormSpread2.get() != 1)
+//    {
+//        formIsSpread2 = true;
+//        auto start = jlimit(100.f, 15999.f, mFormFreq2.get() / mFormSpread2.get() );
+//        auto end = jlimit(101.f, 16000.f, mFormFreq2.get() * mFormSpread2.get() );
+//        formRange2.setStart(start);
+//        formRange2.setEnd(end);
+//    }
+//    else
+//    {
+//        formIsSpread2 = false;
+//    }
+//    
+//
+//    pulsarTrain.setFrequencies(mFundFreq.get(), mFormFreq2.get(), mFormFreq.get());
+//    //pulsarTrain.updateFormant();
+//}
+//
+//
+//void PulsarAudioProcessor::updatePan()
+//{
+//    
+//    
+//    if(panSpread.get() != 0)
+//    {
+//        panIsSpread = true;
+//        auto start = jlimit(0.f, 99.f, panR.get() - panSpread.get()/2);
+//        auto end = jlimit(1.f, 100.f, panR.get() + panSpread.get()/2);
+//        
+//        panRange.setStart(start);
+//        panRange.setEnd(end);
+//    }
+//    else
+//    {
+//        panIsSpread = false;
+//    }
+//
+//}
 
 
 
 void PulsarAudioProcessor::updateWave()
 {
-    waveType = *e.getRawParameterValue("Wave Type");
-    waveSpread = *e.getRawParameterValue("Wave Spread");
-    waveRand = *e.getRawParameterValue("Wave Random");
     
-    if(waveSpread.get() != 0)
-    {
-        waveIsSpread = true;
-        auto start = jlimit(0.f, 99.f, waveType.get() - waveSpread.get()/2);
-        auto end = jlimit(1.f, 100.f, waveType.get() + waveSpread.get()/2);
-        waveRange.setStart(start);
-        waveRange.setEnd(end);
-        
-    }
-    else
-    {
-        waveIsSpread = false;
-    }
     
-    pulsaretTable.setTable(waveType.get() / 100.f);
-}
-
-void PulsarAudioProcessor::updateAmp()
-{
-    mAmp = *e.getRawParameterValue("Amp");
-    mAmpSpread = *e.getRawParameterValue("Amp Spread");
-    mAmpRand = *e.getRawParameterValue("Amp Random");
-    intermittance = *e.getRawParameterValue("Intermittance");
-    trainIsRunning = *e.getRawParameterValue("Trigger");
-    if(trainIsRunning.get())
-    {
-        setTrainRunning();
-    }
-    else if (!trainIsRunning.get())
-    {
-        setTrainStopped();
-    }
-    
-    auto glideTime = e.getRawParameterValue("Glide Time");
-    pulsarTrain.setGlideTime(*glideTime);
-    auto on = e.getRawParameterValue("Trigger On");
-    auto off = e.getRawParameterValue("Trigger Off");
-
-    pulsarTrain.setTrigger(*on, *off);
-    if (mAmpSpread.get() != 0)
-    {
-        ampIsSpread = true;
-        auto start = jlimit(0.f, 99.f, mAmp.get() - mAmpSpread.get()/2);
-        auto end = jlimit(1.f, 100.f, mAmp.get() + mAmpSpread.get()/2);
-        ampRange.setStart(start);
-        ampRange.setEnd(end);
-    }
-    else
-    {
-        ampIsSpread = false;
-    }
     
 }
-        
+
+//void PulsarAudioProcessor::updateAmp()
+//{
+//
+//    if(trainIsRunning.get())
+//    {
+//        setTrainRunning();
+//    }
+//    else if (!trainIsRunning.get())
+//    {
+//        setTrainStopped();
+//    }
+//
+//
+//
+//
+//
+//
+//}
+
 /*=============================================================================================*/
 /*=============================================================================================*/
 void PulsarAudioProcessor::valueTreePropertyChanged(ValueTree& tree, const Identifier& property)
@@ -435,21 +427,21 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> parameters;
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Fundamental Freq", "Fundamental Freq",
-                                                                NormalisableRange<float> (1.f, 1000.f, 0.1f, 0.5f), 200.f));
+                                                                NormalisableRange<float> (1.f, 500.f, 0.01f, 0.5f), 50.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Fundamental Spread", "Fundamental Spread",
-                                                                NormalisableRange<float> (1.f, 16.f, 0.01f, 0.5f), 1.f));
+                                                                NormalisableRange<float> (1.f, 12.f, 0.001f, 0.5f), 1.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Fundamental Random", "Fundamental Random",
-                                                                NormalisableRange<float> (0.f, 1.f, 0.01f, 1.f), 0.f));
+                                                                NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.f));
     
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Formant Freq", "Formant Freq",
-                                                                NormalisableRange<float> (100.f, 16000.f, 0.1f, 0.25f), 600.f));
+                                                                NormalisableRange<float> (100.f, 10000.f, 0.01f, 0.3f), 100.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Formant Spread", "Formant Spread",
-                                                                NormalisableRange<float> (1.f, 16.f, 0.01f, 0.5f), 1.f));
+                                                                NormalisableRange<float> (1.f, 15.f, 0.001f, 1.f), 1.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Formant Random", "Formant Random",
                                                                 NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.f));
@@ -457,10 +449,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Formant Freq2", "Formant Freq2",
-                                                                NormalisableRange<float> (100.f, 16000.f, 0.1f, 0.25f), 600.f));
+                                                                NormalisableRange<float> (100.f, 10000.f, 0.01f, 0.3f), 200.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Formant Spread2", "Formant Spread2",
-                                                                NormalisableRange<float> (1.f, 16.f, 0.01f, 0.5f), 1.f));
+                                                                NormalisableRange<float> (1.f, 15.f, 0.001f, 1.f), 1.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Formant Random2", "Formant Random2",
                                                                 NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.f));
@@ -468,7 +460,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Pan", "Pan",
-                                                                NormalisableRange<float> (0.0f, 100.f, 0.1f, 1.f), 50.f));
+                                                                NormalisableRange<float> (0.0f, 100.f, 0.001f, 1.f), 50.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Pan Spread", "Pan Spread",
                                                                 NormalisableRange<float> (0.f, 100.f, 0.01f, 1.f), 1.f));
@@ -479,7 +471,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Wave Type", "Wave Type",
-                                                                NormalisableRange<float> (0.f, 100.f, 0.001f, 1.f), 50.f));
+                                                                NormalisableRange<float> (0.f, 100.f, 0.001f, 1.f), 0.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Wave Spread", "Wave Spread",
                                                                 NormalisableRange<float> (0.f, 100.f, 0.1f, 1.f), 0.f));
@@ -503,7 +495,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     
     parameters.push_back (std::make_unique<AudioParameterInt>("Trigger On", "Trigger On", 1, 10, 1));
     
-    parameters.push_back (std::make_unique<AudioParameterInt>("Trigger Off", "Trigger Off", 0, 10, 1));
+    parameters.push_back (std::make_unique<AudioParameterInt>("Trigger Off", "Trigger Off", 0, 10, 0));
     
     parameters.push_back (std::make_unique<AudioParameterBool>("Trigger", "Trigger", false));
     
@@ -511,7 +503,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Width", "Width",
-                                                                NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.01f));
+                                                                NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.f));
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Attack", "Attack",
@@ -519,7 +511,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     parameters.push_back (std::make_unique<AudioParameterFloat>("Decay", "Decay",
                                                                 NormalisableRange<float> (0.f, 5000.f, 0.001f, 0.5f), 50.f));
     parameters.push_back (std::make_unique<AudioParameterFloat>("Sustain Level", "Sustain Level",
-                                                                NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.01f));
+                                                                NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.5f));
     parameters.push_back (std::make_unique<AudioParameterFloat>("Release", "Release",
                                                                 NormalisableRange<float> (0.f, 10000.f, 0.001f, 0.5f), 200.f));
     

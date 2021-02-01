@@ -40,21 +40,38 @@ public:
     PulsaretTable& pulsaretTable;
     
     
-    void setCycles(int cyc)
+    void setLengthInSamples(float numSamples, float pulsarPeriod);
+    void isSingleCycle(bool is);
+    void setContinuous(bool test);
+    void setAsHit();
+    void setAsMiss();
+    
+    void setWaveType(float wave)
     {
-        cycles = jmax(cyc, 1);
-        cyclesLeft = cycles;
+        auto normalized = wave / 100.f;
+        pulsaretTable.setTable(normalized);
     }
     
     juce::AudioBuffer<float>& getEnv();
 private:
+    float freq;
+    bool trigger = true;
+    bool singleCycle = true;
+    bool continuous = false;
+    
     double mSampleRate = 0;
     Envelope env;
     int tableSize;
+    
+    int pulsarPeriodInSamples = 100;
     float currentIndex = 0.0f;
     float tableDelta = 0.0f;
+    float cycleSamples = 1;
+    float cycleSamplesLeft = 1;
     int cycles = 1;
-    int cyclesLeft = 1;
+    int numCycles = 1;
+    
+    
     
     // a reference to the array that holds this OwnedPulsaret
     juce::OwnedArray<OwnedPulsaret>& pulsaretArray;

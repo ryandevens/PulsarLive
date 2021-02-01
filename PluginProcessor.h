@@ -11,7 +11,7 @@
 #include <JuceHeader.h>
 #include "PulsarTrain.h"
 #include "OwnedPulsaret.h"
-#include "PulsarSynthesiser.h"
+//#include "PulsarSynthesiser.h"
 
 //==============================================================================
 /**
@@ -99,10 +99,13 @@ public:
     
     juce::AudioBuffer<float>& getEnvBuffer();
     
+    void setRanges();
+    
+    void handleMidi(juce::MidiBuffer midiBuffer);
     
 private:
-    PulsarSynthesiser pulsarSynth;
-    MidiMessageCollector messageCollector;
+//    PulsarSynthesiser pulsarSynth;
+//    MidiMessageCollector messageCollector;
     
     bool trainRunning = false;
     
@@ -114,13 +117,15 @@ private:
     // remember this is just one type/trajectory of pulsarets, meant to accomodate overlap
     juce::OwnedArray<OwnedPulsaret> pulsaretArray;
     juce::OwnedArray<OwnedPulsaret> pulsaretArray2;
-    
-    
-    
-    
+
     Atomic<bool>  trainIsRunning    {false};
     Atomic<bool> triggerFlash {false};
     
+    Atomic<float> waveType           { 0.f };
+    Atomic<float> waveSpread         { 0.f };
+    Atomic<float> waveRand           { 0.f };
+    Atomic<bool> waveIsSpread        { false };
+    juce::Range<int> waveRange;
     
     bool mustUpdateProcessing { false };
     bool mustUpdateFund { false };
@@ -134,47 +139,7 @@ private:
 
     
     
-    Atomic<float> mAmp               { 0.0f };
-    Atomic<float> mAmpSpread         { 0.0f };
-    Atomic<float> mAmpRand           { 0.05f };
-    Atomic<bool> ampIsSpread         { false };
-    Atomic<float> intermittance      { 1.0f };
-    juce::Range<int> ampRange;
-    
-    Atomic<float> mFundFreq          { 40.0f };
-    Atomic<float> mFundSpread        { 0.0f };
-    Atomic<float> mFundRand          { 0.05 };
-    Atomic<bool> fundIsSpread        { false };
-    juce::Range<int> fundRange;
-    
-    Atomic<float> mFormFreq          { 200.0f };
-    Atomic<float> mFormSpread        { 0.0f };
-    Atomic<float> mFormRand          { 0.05 };
-    Atomic<bool> formIsSpread        { false };
-    juce::Range<int>   formRange;
-    
-    
-    Atomic<float> mFormFreq2         { 200.0f };
-    Atomic<float> mFormSpread2       { 0.f };
-    Atomic<float> mFormRand2         { 0.05 };
-    Atomic<bool> formIsSpread2       { false };
-    juce::Range<int>   formRange2;
-    
-    Atomic<float> panL               { 1.f };
-    Atomic<float> panR               { 0.f };
-    Atomic<float> panSpread          { 0.f };
-    Atomic<float> panRand            { 0.f };
-    Atomic<bool> panIsSpread         { false };
-    juce::Range<int> panRange;
-    
-    Atomic<float> waveType           { 0.f };
-    Atomic<float> waveSpread         { 0.f };
-    Atomic<float> waveRand           { 0.f };
-    Atomic<bool> waveIsSpread        { false };
-    juce::Range<int> waveRange;
-    
-    Atomic<float> width {0.1f};
-    
+        
 
     
     //==============================================================================

@@ -86,6 +86,8 @@ public:
     void createGaussian();
     void setFrequency(float freq);
     
+    void closeEnv(int sampLeft);
+    
 private:
     bool isWaveEnv = false;
     int currentIndex = 0;

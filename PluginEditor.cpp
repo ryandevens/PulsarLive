@@ -15,7 +15,7 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
 {
     
     //setSize (530, 330);
-    setSize(530, 700);
+    setSize(530, 400);
     startTimerHz(60);
     
     
@@ -33,8 +33,8 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     pulsaretVisualizer->setBounds(15, 50, getWidth() - 30, getHeight() - 65);
     addAndMakeVisible(pulsaretVisualizer.get());
     
-    wtVisualizer.setBounds(15, 330, getWidth()-5, getHeight() - 65);
-    addAndMakeVisible(wtVisualizer);
+//    wtVisualizer.setBounds(15, 330, getWidth()-5, getHeight() - 65);
+//    addAndMakeVisible(wtVisualizer);
     
     triggerButton = std::make_unique<TextButton>();
     triggerButton->setBounds(15, 50, getWidth() - 30, getHeight() - 65);
@@ -42,31 +42,31 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     addAndMakeVisible(triggerButton.get());
     
     widthSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearHorizontal, Slider::NoTextBox);
-    widthSlider->setBounds(115, 375, 300, 20);
+    widthSlider->setBounds(115, 335, 300, 20);
     widthSlider->addListener(this);
     widthSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (widthSlider.get());
     
     attackSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    attackSlider->setBounds(20, getHeight()-365, 10, 60);
+    attackSlider->setBounds(25, getHeight()-365, 10, 60);
     attackSlider->addListener(this);
     attackSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (attackSlider.get());
     
     decaySlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    decaySlider->setBounds(40, getHeight()-365, 10, 60);
+    decaySlider->setBounds(45, getHeight()-365, 10, 60);
     decaySlider->addListener(this);
     decaySlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (decaySlider.get());
     
     sustainSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    sustainSlider->setBounds(60, getHeight()-365, 10, 60);
+    sustainSlider->setBounds(65, getHeight()-365, 10, 60);
     sustainSlider->addListener(this);
     sustainSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (sustainSlider.get());
     
     releaseSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
-    releaseSlider->setBounds(80, getHeight()-365, 10, 60);
+    releaseSlider->setBounds(85, getHeight()-365, 10, 60);
     releaseSlider->addListener(this);
     releaseSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (releaseSlider.get());
@@ -373,22 +373,12 @@ void PulsarAudioProcessorEditor::resized()
 
 void PulsarAudioProcessorEditor::buttonClicked(Button* button)
 {
-    if (button == triggerButton.get())
-    {
-        //audioProcessor.updateAmp();
-//        if(button->isDown())
-//        {
-//            audioProcessor.setTrainRunning();
-//        }
-        //audioProcessor.triggerPulsarTrain();
-        
-        
-    }
+
 }
 
 void PulsarAudioProcessorEditor::buttonStateChanged(Button* button)
 {
-    wtVisualizer.setBuffer(audioProcessor.getEnvBuffer());
+    //wtVisualizer.setBuffer(audioProcessor.getEnvBuffer());
     if(button == triggerButton.get())
     {
         triggerButton->repaint();
@@ -578,11 +568,7 @@ void PulsarAudioProcessorEditor::sliderValueChanged(Slider* s)
 
 void PulsarAudioProcessorEditor::comboBoxChanged(ComboBox* box)
 {
-//    if (box == &waveBox)
-//    {
-//        audioProcessor.update();
-//        pulsaretVisualizer.repaint();
-//    }
+
 }
 
 
@@ -601,17 +587,7 @@ void PulsarAudioProcessorEditor::timerCallback()
         //pulsaretVisualizer->setNewBackgroundColour(pulsaretVisualizer->get.contrasting());
         pulsaretVisualizer->repaint();
         wtVisualizer.repaint();
-//        if(audioProcessor.getFlashState())
-//        {
-//
-//        }
-//        else
-//        {
-////            pulsaretVisualizer->setAlpha(0.f);
-//            pulsaretVisualizer->setNewWaveColour(juce::Colours::black.withAlpha(0.f));
-//            //pulsaretVisualizer->setNewBackgroundColour(juce::Colours::black);
-//            pulsaretVisualizer->repaint();
-//        }
+
     }
     else if (!triggerButton->isDown())
     {
