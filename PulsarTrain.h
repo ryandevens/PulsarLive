@@ -21,13 +21,7 @@
 class PulsarTrain
 {
 public:
-    PulsarTrain(juce::OwnedArray<OwnedPulsaret>& array, juce::OwnedArray<OwnedPulsaret>& array2,
-                Atomic<float>& fund, juce::Range<int>& fuRange, Atomic<float>& fundRand, Atomic<bool>& fuIsSpread,
-                Atomic<float>& form, juce::Range<int>& fRange, Atomic<float>& formRand, Atomic<bool>& fIsSpread,
-                Atomic<float>& form2, juce::Range<int>& fRange2, Atomic<float>& formRand2, Atomic<bool>& fIsSpread2,
-                Atomic<float>& pL, Atomic<float>& pR, juce::Range<int>& pRange, Atomic<float>& panRand, Atomic<bool>& pIsSpread,
-                Atomic<float>& amp, juce::Range<int>& aRange, Atomic<float>& ampRand, Atomic<bool>& ampIsSpread,
-                Atomic<float>& inter, Atomic<float>& wType, juce::Range<int>& wRange, Atomic<float>& wRand, Atomic<bool>& wIsSpread);
+    PulsarTrain(juce::OwnedArray<OwnedPulsaret>& array, juce::OwnedArray<OwnedPulsaret>& array2);
     
 //    PulsarTrain(Envelope& ampEnv, Envelope& fEnv, Envelope& foEnv, Envelope& pEnv, Envelope& wEnv, juce::OwnedArray<OwnedPulsaret>& array);
     ~PulsarTrain();
@@ -48,16 +42,18 @@ public:
     void checkStatus();
     bool needsCalculation = false;
     
-    void updateParams(Atomic<float>& fund, Atomic<float>& fundSpread, Atomic<float>& fundRand,
-                      Atomic<float>& form, Atomic<float>& formSpread, Atomic<float>& formRand,
-                      Atomic<float>& form2, Atomic<float>& formSpread2, Atomic<float>& formRand2,
-                      Atomic<float>& pan, Atomic<float>& panSpread, Atomic<float>& panRand,
-                      Atomic<float>& amp, Atomic<float>& ampSpread, Atomic<float>& ampRand,
-                      Atomic<float>& intermittance);
+    void updateParams(float f, float fSpread, float fRand,
+                      float fo, float foSpread, float foRand,
+                      float fo2, float foSpread2, float foRand2,
+                      float p, float pSpread, float pRand,
+                      float a, float aSpread, float aRand,  
+                      float intermittance, float atk, float dec, float sus, float rel, float wid,
+                      float glide, int trigOn, int trigOff, bool trig, float w, float wSpread, float wRand);
     
     void updateFundamental();
     void updateFormant();
     
+    void calculateRanges();
     
     void updateRanges();
     
@@ -73,25 +69,41 @@ public:
     void setPulsaretWidth(float width);
     void triggerEnv();
     void triggerRelease();
-    void setEnv(float atk, float dec, float sus, float rel);
+    void setEnv();
+    
+    void freePulsarets();
+    
+    void triggerPulsaretWithNoAmp();
 
+    // determine if the parameter is "spread"
+    void checkSpreads();
     
 private:
     pedal::CurvedEnvelope   env;
+    bool isContinuous = false;
+    bool isSingleCycle = true;
+    int  flag = 0;
+    float attack;
+    float decay;
+    float sustain;
+    float release;
     
-    
-    int pulsaretCycles1 = 1;
-    int pulsaretCycles2 = 1;
+    float pulsaretSamples1 = 1.f;
+    float pulsaretSamples2 = 1.f;
     
     float pulsaretWidth = 0.1f;
     
     bool inHarmonicMode = false;
     
+    float glideTime;
     int triggerOn = 1;
+
     int onCount = 1;
     int triggerOff = 0;
+
     int offCount = 0;
-    bool isTriggerPattern = false;
+    bool isTriggerPattern = true;
+    bool trigger;
     
     juce::Random rand;
     Atomic<float> flashState { 0.f };
@@ -109,45 +121,47 @@ private:
     int samplesRemainingInPeriod = 0;
     int samplesRemainingInEnvelope = 0;
     
-    Atomic<float>& mAmp;
-    //Atomic<float>& mAmpSpread;
-    Atomic<float>& mAmpRand;
-    Atomic<bool>& ampIsSpread;
-    Atomic<float>& intermittance;
-    juce::Range<int>& ampRange;
+    Atomic<float> mAmp               { 0.0f };
+    Atomic<float> mAmpSpread         { 0.0f };
+    Atomic<float> mAmpRand           { 0.05f };
+    Atomic<bool> ampIsSpread         { false };
+    Atomic<float> intermittance      { 1.0f };
+    juce::Range<int> ampRange;
     
-    Atomic<float>& mFundFreq;
-    //Atomic<float>& mFundSpread;
-    Atomic<float>& mFundRand;
-    Atomic<bool>& fundIsSpread;
-    juce::Range<int>& fundRange;
+    Atomic<float> mFundFreq          { 40.0f };
+    Atomic<float> mFundSpread        { 0.0f };
+    Atomic<float> mFundRand          { 0.05 };
+    Atomic<bool> fundIsSpread        { false };
+    juce::Range<int> fundRange;
     
-    Atomic<float>& mFormFreq;
-    //Atomic<float>& mFormSpread;
-    Atomic<float>& mFormRand;
-    Atomic<bool>& formIsSpread;
-    juce::Range<int>&   formRange;
-    
-    
-    Atomic<float>& mFormFreq2;
-    //Atomic<float>& mFormSpread2;
-    Atomic<float>& mFormRand2;
-    Atomic<bool>& formIsSpread2;
-    juce::Range<int>&   formRange2;
-    
-    Atomic<float>& panL;
-    Atomic<float>& panR;
-    //Atomic<float>& panSpread;
-    Atomic<float>& panRand;
-    Atomic<bool>& panIsSpread;
-    juce::Range<int>& panRange;
+    Atomic<float> mFormFreq          { 200.0f };
+    Atomic<float> mFormSpread        { 0.0f };
+    Atomic<float> mFormRand          { 0.05 };
+    Atomic<bool> formIsSpread        { false };
+    juce::Range<int>   formRange;
     
     
-    Atomic<float>& waveType;
-    //Atomic<float>& waveSpread;
-    Atomic<float>& waveRand;
-    Atomic<bool>& waveIsSpread;
-    juce::Range<int>& waveRange;
+    Atomic<float> mFormFreq2         { 200.0f };
+    Atomic<float> mFormSpread2       { 0.f };
+    Atomic<float> mFormRand2         { 0.05 };
+    Atomic<bool> formIsSpread2       { false };
+    juce::Range<int>   formRange2;
+    
+    Atomic<float> panL               { 1.f };
+    Atomic<float> panR               { 0.f };
+    Atomic<float> panSpread          { 0.f };
+    Atomic<float> panRand            { 0.f };
+    Atomic<bool> panIsSpread         { false };
+    juce::Range<int> panRange;
+    
+    Atomic<float> waveType           { 0.f };
+    Atomic<float> waveSpread         { 0.f };
+    Atomic<float> waveRand           { 0.f };
+    Atomic<bool> waveIsSpread        { false };
+    juce::Range<int> waveRange;
+    
+    Atomic<float> width {0.1f};
+
     
     
     juce::SmoothedValue<float, ValueSmoothingTypes::Multiplicative> smoothFund;

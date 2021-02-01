@@ -13,7 +13,7 @@
 OwnedPulsaret::OwnedPulsaret(juce::OwnedArray<OwnedPulsaret>& p, PulsaretTable& t) : pulsaretTable(t), pulsaretArray(p)
 {
     tableSize = pulsaretTable.getTable().getNumSamples() - 1;
-    env.setTableSize(tableSize);
+    env.setTableSize(tableSize +1);
 }
 
 OwnedPulsaret::~OwnedPulsaret()
@@ -25,6 +25,7 @@ OwnedPulsaret::~OwnedPulsaret()
 void OwnedPulsaret::prepare(double sampleRate)
 {
     mSampleRate = sampleRate;
+    env.prepare(sampleRate);
 }
 
 
@@ -33,9 +34,13 @@ void OwnedPulsaret::prepare(double sampleRate)
 /*=========================================================*/
 void OwnedPulsaret::setFrequency (float frequency)
 {
+    freq = frequency;
     tableSize = pulsaretTable.getTable().getNumSamples() - 1;
     auto tableSizeOverSampleRate = (float) tableSize / mSampleRate;
     tableDelta = frequency * tableSizeOverSampleRate;
+    
+    env.setFrequency(frequency);
+
     
 }
 
@@ -66,31 +71,90 @@ float OwnedPulsaret::getNextSample() noexcept
     waveSample2 *= pulsaretTable.getWaveFraction();
     
     auto currentSample = waveSample1 + waveSample2;
-    
-    /*
-        reset currentIndex to 0 (restart wavetable).  Don't free the pulsaret until no cycles left
-    */
-    if ((currentIndex += tableDelta) > (float) tableSize)
-    {
-        currentIndex = 0;
-        cyclesLeft--;
-        
-        if(cyclesLeft <= 0)
-        {
-            currentIndex = 0;
-            isFree = true;
-            cyclesLeft = cycles;
-            //DBG(cycles);
-        }
 
-        //moveToBack(*this);
+    //moveToBack(*this);
+   
+    
+    currentIndex += tableDelta;
+    if (currentIndex > (float) tableSize)
+    {
+        //env.resetIndex();
+        if (singleCycle)
+        {
+
+            isFree = true; //  this is really what stops it from playing (turns it off)
+        }
+        
+        currentIndex = 0;
+    }
+
+    /*
+     reset currentIndex to 0 (restart wavetable).  Don't free the pulsaret until no cycles left
+     start decrementing cycles if it is not singleCycle and not continuous
+     */
+    if(!singleCycle) // more than one
+    {
+        
+//        if(!continuous) //
+//        {
+        
+            cycles--;
+       
+            if(cycles == 0)
+            {
+                isFree = true;
+                cycles = numCycles;
+            }
+            
+        //}
     }
     
-    return currentSample * env.getNextSample();
+    if (trigger)
+    {
+        return currentSample;
+    }
+    else if (!trigger)
+    {
+        return 0.f;
+    }
+    
 }
+
+
+
+void OwnedPulsaret::setLengthInSamples(float numSamples, float pulsarPeriod)
+{
+
+    cycleSamples = numSamples;
+    auto pulsaretPeriod = (1/freq) * mSampleRate;
+
+    cycles = cycleSamples / pulsaretPeriod;
+    
+    if(cycles <= 1)
+    {
+        singleCycle = true;
+        cycles = 1;
+    }
+    
+    if(cycles > 1)
+    {
+        singleCycle = false;
+    }
+    numCycles = cycles;
+}
+
+
+
+void OwnedPulsaret::isSingleCycle(bool isSingle)
+{
+    singleCycle = isSingle;
+}
+
+
 
 void OwnedPulsaret::setRunning()
 {
+    setAsHit();
     isFree = false;
 }
 
@@ -103,4 +167,26 @@ juce::AudioBuffer<float>& OwnedPulsaret::getEnv()
     return env.getTable();
 }
 
+void OwnedPulsaret::setContinuous(bool test)
+{
+
+//    if(!test && continuous) //  turning off continuous test = false, cont = true
+//    {
+//        
+//        isFree = true; // should only have free pulsarets by next period of pulsar
+//    }
+//    
+//    continuous = test;
+    
+}
+
+void OwnedPulsaret::setAsHit()
+{
+    trigger = true;
+}
+
+void OwnedPulsaret::setAsMiss()
+{
+    trigger = false;
+}
 

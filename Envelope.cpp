@@ -31,14 +31,15 @@ Envelope::~Envelope()
 void Envelope::prepare(double sampleRate)
 {
     mSampleRate = sampleRate;
+    
 }
 
 
 void Envelope::setTotalMilliseconds(float ms)
 {
-    totalMilliseconds = ms;
-    envLengthInSamples = (ms * mSampleRate) / 1000;
-    tableIncrement = (float) tableSize / envLengthInSamples; // divides our table up into sample size increments that are less than one index of the table
+//    totalMilliseconds = ms;
+//    envLengthInSamples = (ms * mSampleRate) / 1000;
+//    tableIncrement = (float) tableSize / envLengthInSamples; // divides our table up into sample size increments that are less than one index of the table
 }
 
 void Envelope::setFrequency(float freq)
@@ -46,6 +47,10 @@ void Envelope::setFrequency(float freq)
     tableSize = envelopeTable.getNumSamples() - 1;
     auto tableSizeOverSampleRate = (float) tableSize / mSampleRate;
     tableDelta = freq * tableSizeOverSampleRate;
+    
+
+
+    
 }
 
 
@@ -70,6 +75,7 @@ float Envelope::getNextSample()
     if (currentPhase > (float) tableSize)
         resetEnvelope();
 
+    
     return val;
 }
 
@@ -77,6 +83,11 @@ void Envelope::resetEnvelope()
 {
     currentPhase = 0;
     isComplete = true;
+}
+
+void Envelope::closeEnv(int sampLeft)
+{
+    currentPhase = tableSize - sampLeft;
 }
 
 /*============================================================*/
@@ -152,6 +163,8 @@ void Envelope::setSliderVal(double val)
 void Envelope::setTableSize(int size)
 {
     envelopeTable.setSize(1, size);
+    tableSize = size - 1;
+    createGaussian();
 }
 
 void Envelope::createGaussian()
@@ -176,6 +189,6 @@ void Envelope::createGaussian()
        
         
     }
-    buffWrite[tableOrder] = buffWrite[0];
+    buffWrite[tableSize] = buffWrite[0];
 }
 
