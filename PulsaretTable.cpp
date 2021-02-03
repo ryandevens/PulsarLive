@@ -22,7 +22,7 @@ PulsaretTable::PulsaretTable()
     tableArray.add(&sincTable);
     tableArray.add(&triTable);
     tableArray.add(&sawTable);
-    tableArray.add(&sineTable);
+    //tableArray.add(&sineTable);
     
 }
 

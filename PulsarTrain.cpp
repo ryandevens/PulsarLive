@@ -31,9 +31,9 @@ PulsarTrain::~PulsarTrain()
 void PulsarTrain::prepare(double sampleRate)
 {
     mSampleRate = sampleRate;
-    smoothFund.reset(mSampleRate, 2.5);
-    smoothForm.reset(mSampleRate, 2.5);
-    smoothForm2.reset(mSampleRate, 2.5);
+    smoothFund.reset(mSampleRate, glideTime.get());
+    smoothForm.reset(mSampleRate, glideTime.get());
+    smoothForm2.reset(mSampleRate, glideTime.get());
     
     fundRange.setStart(1);
     fundRange.setEnd(500);
@@ -62,20 +62,7 @@ void PulsarTrain::setFrequencies(float fundFreq, float form1, float form2)
     smoothFund.setTargetValue(fundFreq);
     smoothForm.setTargetValue(form1);
     smoothForm2.setTargetValue(form2);
-    
-//    if(inHarmonicMode)
-//    {
-//        
-//        setHarmonicFormants(fundFreq, form1, form2);
-//        smoothFund.setTargetValue(fundFreq);
-//    }
-//    if(!inHarmonicMode)
-//    {
-//        smoothFund.setTargetValue(fundFreq);
-//        smoothForm.setTargetValue(form1);
-//        smoothForm2.setTargetValue(form2);
-//    }
-    //DBG(smoothFund.getNextValue());
+
 
 }
 
@@ -110,8 +97,7 @@ void PulsarTrain::setHarmonicFormants(float fund, float form1, float form2)
 */
 int PulsarTrain::getPeriod()
 {
-    //DBG(mFundFreq.get());
-//    smoothFund.setTargetValue(mFundFreq.get());
+
     auto freq = mFundFreq.get();
     
     if(fundIsSpread.get())
@@ -263,28 +249,7 @@ void PulsarTrain::updateFundamental()
 
 void PulsarTrain::setPulsaretWidth(float width)
 {
-//    if (width > 0.98)
-//    {
-//
-//        isContinuous = true;
-//        isSingleCycle = false;
-//    }
-//
-//
-//    if(width <= 0.98 && width >= 0.02)
-//    {
-//
-//        isContinuous = false;
-//        isSingleCycle = false;
-//
-//        float dutyCycle = getPeriod() * width;
-//        pulsaretSamples1 = dutyCycle;
-//
-//
-//        float dutyCycle2 = getPeriod() * width;
-//        pulsaretSamples2 = dutyCycle2;
-//
-//    }
+
     
         isSingleCycle = false;
     
@@ -305,9 +270,7 @@ void PulsarTrain::setPulsaretWidth(float width)
         pulsaretSamples2 = (1/mFormFreq2.get()) * mSampleRate;
 
     }
-    
-    
-    
+
 
 }
 
@@ -540,7 +503,11 @@ void PulsarTrain::setTrigger(int on, int off)
 
 void PulsarTrain::setGlideTime(float glideTime)
 {
+    
     auto seconds = glideTime / 1000;
+    smoothFund.reset(mSampleRate, seconds);
+    smoothForm.reset(mSampleRate, seconds);
+    smoothForm2.reset(mSampleRate, seconds);
 }
 
 bool PulsarTrain::getHarmonicModeStatus()
@@ -561,6 +528,7 @@ float PulsarTrain::getFormFreq2()
 void PulsarTrain::triggerEnv()
 {
     setEnv();
+    setGlideTime(glideTime.get());
     env.setTrigger(true);
 }
 
@@ -625,7 +593,7 @@ void PulsarTrain::updateParams(float f, float fSpread, float fRand,
     release = rel;
     
     glideTime = gTime;
-    setGlideTime(gTime);
+//    setGlideTime(gTime);
     
     waveType = w;
     waveSpread = wSpread;

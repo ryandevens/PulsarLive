@@ -32,6 +32,9 @@ public:
     float getWaveIndex();
     
 private:
+    //juce::OwnedArray<AudioBuffer<float>> tableArray;
+    juce::OwnedArray<AudioBuffer<float>> tableArray;
+    
     juce::AudioBuffer<float> pulsaretTable;
     juce::AudioBuffer<float> sineTable;
     juce::AudioBuffer<float> sincTable;
@@ -48,7 +51,7 @@ private:
     Atomic<float> normalWaveIndex {0.f};
     Atomic<int> intWaveIndex {0}; // selected wavetable, rounded down
     
-    juce::OwnedArray<AudioBuffer<float>> tableArray;
+    
     
     int tableSize;
     float currentIndex = 0.0f, tableDelta = 0.0f;

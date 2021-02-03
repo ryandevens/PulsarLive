@@ -106,6 +106,8 @@ private:
     std::unique_ptr<Slider>         sustainSlider;
     std::unique_ptr<Slider>         releaseSlider;
     
+    std::unique_ptr<Slider>         glideSlider;
+    
     std::unique_ptr<Label>          nameLabel;
     
     using Attachment = juce::AudioProcessorValueTreeState::SliderAttachment;
@@ -143,6 +145,8 @@ private:
     std::unique_ptr<Attachment>     decayAttachment;
     std::unique_ptr<Attachment>     sustainAttachment;
     std::unique_ptr<Attachment>     releaseAttachment;
+    
+    std::unique_ptr<Attachment>     glideAttachment;
     
     std::unique_ptr<AudioProcessorValueTreeState::ButtonAttachment>     triggerAttachment;
     

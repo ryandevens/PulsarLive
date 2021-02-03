@@ -24,11 +24,13 @@ PulsarAudioProcessor::PulsarAudioProcessor()
 {
     e.state.addListener (this);
     
-    for (int i = 0; i < 12; ++i)
-    {
-        pulsaretArray.add(new OwnedPulsaret(pulsaretArray, pulsaretTable)); // up to 8 pulsarets available to overlap with each other
-        pulsaretArray2.add(new OwnedPulsaret(pulsaretArray2, pulsaretTable));
-    }
+    
+    
+//    for (int i = 0; i < 12; ++i)
+//    {
+//        pulsaretArray.add(new OwnedPulsaret(pulsaretArray, pulsaretTable)); // up to 8 pulsarets available to overlap with each other
+//        pulsaretArray2.add(new OwnedPulsaret(pulsaretArray2, pulsaretTable));
+//    }
     
     
 }
@@ -173,13 +175,16 @@ void PulsarAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
         
         auto message = metadata.getMessage();
         
-        if (message.isNoteOn())
+        if (message.isNoteOn() || message.isSustainPedalOn())
         {
             pulsarTrain.triggerEnv();
             
         }
-        if (message.isNoteOff())
+        if (message.isNoteOff() || message.isSustainPedalOff())
+        {
             pulsarTrain.triggerRelease();
+        }
+        
     }
 }
 
@@ -290,97 +295,6 @@ void PulsarAudioProcessor::update()
 
     //pulsaretTable.setTable(waveType.get() / 100.f);
 }
-//void PulsarAudioProcessor::updateFund()
-//{
-//    
-//    
-//    pulsarTrain.setEnv(*atk, *dec, *sus, *rel);
-//    
-//    if(mFundSpread.get() != 1)
-//    {
-//        fundIsSpread = true;
-//        auto start = jlimit(1.f, 999.f, mFundFreq.get() / mFundSpread.get());
-//        auto end = jlimit(2.f, 1000.f, mFundFreq.get() * mFundSpread.get());
-//        
-//        fundRange.setStart(start);
-//        fundRange.setEnd(end);
-//    }
-//    else
-//    {
-//        fundIsSpread = false;
-//    }
-//    
-//    pulsarTrain.setFrequencies(mFundFreq.get(), mFormFreq2.get(), mFormFreq.get());
-//    pulsarTrain.setPulsaretWidth(width.get());
-//    pulsarTrain.updateFundamental(); // this really exists just to change the period length
-//}
-//
-//void PulsarAudioProcessor::updateForm()
-//{
-//    
-//
-//    if (mFormSpread.get() != 1)
-//    {
-//        formIsSpread = true;
-//        auto start = jlimit(100.f, 15999.f, mFormFreq.get() / mFormSpread.get());
-//        auto end = jlimit(101.f, 16000.f, mFormFreq.get() * mFormSpread.get());
-//
-//        formRange.setStart(start);
-//        formRange.setEnd(end);
-//    }
-//    else
-//    {
-//        formIsSpread = false;
-//    }
-//
-//    pulsarTrain.setFrequencies(mFundFreq.get(), mFormFreq2.get(), mFormFreq.get());
-//}
-//
-//
-//void PulsarAudioProcessor::updateForm2()
-//{
-//    
-//    
-//    if (mFormSpread2.get() != 1)
-//    {
-//        formIsSpread2 = true;
-//        auto start = jlimit(100.f, 15999.f, mFormFreq2.get() / mFormSpread2.get() );
-//        auto end = jlimit(101.f, 16000.f, mFormFreq2.get() * mFormSpread2.get() );
-//        formRange2.setStart(start);
-//        formRange2.setEnd(end);
-//    }
-//    else
-//    {
-//        formIsSpread2 = false;
-//    }
-//    
-//
-//    pulsarTrain.setFrequencies(mFundFreq.get(), mFormFreq2.get(), mFormFreq.get());
-//    //pulsarTrain.updateFormant();
-//}
-//
-//
-//void PulsarAudioProcessor::updatePan()
-//{
-//    
-//    
-//    if(panSpread.get() != 0)
-//    {
-//        panIsSpread = true;
-//        auto start = jlimit(0.f, 99.f, panR.get() - panSpread.get()/2);
-//        auto end = jlimit(1.f, 100.f, panR.get() + panSpread.get()/2);
-//        
-//        panRange.setStart(start);
-//        panRange.setEnd(end);
-//    }
-//    else
-//    {
-//        panIsSpread = false;
-//    }
-//
-//}
-
-
 
 void PulsarAudioProcessor::updateWave()
 {
@@ -389,24 +303,6 @@ void PulsarAudioProcessor::updateWave()
     
 }
 
-//void PulsarAudioProcessor::updateAmp()
-//{
-//
-//    if(trainIsRunning.get())
-//    {
-//        setTrainRunning();
-//    }
-//    else if (!trainIsRunning.get())
-//    {
-//        setTrainStopped();
-//    }
-//
-//
-//
-//
-//
-//
-//}
 
 /*=============================================================================================*/
 /*=============================================================================================*/
@@ -499,7 +395,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     
     parameters.push_back (std::make_unique<AudioParameterBool>("Trigger", "Trigger", false));
     
-    parameters.push_back (std::make_unique<AudioParameterInt>("Glide Time", "Glide Time", 0, 10000, 6000));
+    parameters.push_back (std::make_unique<AudioParameterFloat>("Glide Time", "Glide Time",NormalisableRange<float> (0.f, 10000.f, 0.1f, 1.f), 100.f)); // in ms, converted later to sec
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Width", "Width",

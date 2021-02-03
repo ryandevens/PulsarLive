@@ -92,6 +92,7 @@ public:
     // prototypical pulsaret which I will make an array of to be considered an "ownedPulsaret"
     
     PulsaretTable& getPulsaretTable();
+    
     PulsarTrain& getPulsarTrain()
     {
         return pulsarTrain;
@@ -103,6 +104,10 @@ public:
     
     void handleMidi(juce::MidiBuffer midiBuffer);
     
+    PulsaretTable pulsaretTable;
+    
+    
+    
 private:
 //    PulsarSynthesiser pulsarSynth;
 //    MidiMessageCollector messageCollector;
@@ -110,13 +115,13 @@ private:
     bool trainRunning = false;
     
     
-    PulsaretTable pulsaretTable;
+    
     PulsarTrain pulsarTrain;
     //PulsarTrainVisualizer trainVisualizer;
     
     // remember this is just one type/trajectory of pulsarets, meant to accomodate overlap
-    juce::OwnedArray<OwnedPulsaret> pulsaretArray;
-    juce::OwnedArray<OwnedPulsaret> pulsaretArray2;
+//    juce::OwnedArray<OwnedPulsaret> pulsaretArray;
+//    juce::OwnedArray<OwnedPulsaret> pulsaretArray2;
 
     Atomic<bool>  trainIsRunning    {false};
     Atomic<bool> triggerFlash {false};

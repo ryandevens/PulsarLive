@@ -42,34 +42,40 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     addAndMakeVisible(triggerButton.get());
     
     widthSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearHorizontal, Slider::NoTextBox);
-    widthSlider->setBounds(115, 335, 300, 20);
+    widthSlider->setBounds(125, 335, 300, 20);
     widthSlider->addListener(this);
     widthSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (widthSlider.get());
     
     attackSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    attackSlider->setBounds(25, getHeight()-365, 10, 60);
+    attackSlider->setBounds(25, getHeight()-85, 10, 60);
     attackSlider->addListener(this);
     attackSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (attackSlider.get());
     
     decaySlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    decaySlider->setBounds(45, getHeight()-365, 10, 60);
+    decaySlider->setBounds(45, getHeight()-85, 10, 60);
     decaySlider->addListener(this);
     decaySlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (decaySlider.get());
     
     sustainSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    sustainSlider->setBounds(65, getHeight()-365, 10, 60);
+    sustainSlider->setBounds(65, getHeight()-85, 10, 60);
     sustainSlider->addListener(this);
     sustainSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (sustainSlider.get());
     
     releaseSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
-    releaseSlider->setBounds(85, getHeight()-365, 10, 60);
+    releaseSlider->setBounds(85, getHeight()-85, 10, 60);
     releaseSlider->addListener(this);
     releaseSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (releaseSlider.get());
+    
+    glideSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
+    glideSlider->setBounds(425, getHeight()-85, 10, 60);
+    glideSlider->addListener(this);
+    glideSlider->setLookAndFeel(&mixFeel);
+    addAndMakeVisible (glideSlider.get());
     /*==================================================================================================*/
     /*========================================== FUNDAMENTAL ===========================================*/
     fundMultiSlider = std::make_unique<Slider>(Slider::SliderStyle::ThreeValueVertical, Slider::NoTextBox);
@@ -196,19 +202,19 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     /*==================================================================================================*/
     /*============================================= INTER ==============================================*/
     interSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
-    interSlider->setBounds(495, 80, 10, 160);
+    interSlider->setBounds(490, 80, 10, 160);
     interSlider->addListener(this);
     interSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (interSlider.get());
     
     triggerOnSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
-    triggerOnSlider->setBounds(455, 80, 20, 160);
+    triggerOnSlider->setBounds(450, 80, 20, 160);
     triggerOnSlider->addListener(this);
     triggerOnSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (triggerOnSlider.get());
     
     triggerOffSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
-    triggerOffSlider->setBounds(475, 80, 20, 160);
+    triggerOffSlider->setBounds(470, 80, 20, 160);
     triggerOffSlider->addListener(this);
     triggerOffSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (triggerOffSlider.get());
@@ -329,6 +335,8 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     decayAttachment = std::make_unique<Attachment>(audioProcessor.e, "Decay", *decaySlider);
     sustainAttachment = std::make_unique<Attachment>(audioProcessor.e, "Sustain Level", *sustainSlider);
     releaseAttachment = std::make_unique<Attachment>(audioProcessor.e, "Release", *releaseSlider);
+    
+    glideAttachment = std::make_unique<Attachment>(audioProcessor.e, "Glide Time", *glideSlider);
     
     
     ampSpreadSlider->setValue(0);

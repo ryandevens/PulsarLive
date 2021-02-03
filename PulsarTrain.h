@@ -95,7 +95,7 @@ private:
     
     bool inHarmonicMode = false;
     
-    float glideTime;
+    
     int triggerOn = 1;
 
     int onCount = 1;
@@ -161,6 +161,8 @@ private:
     juce::Range<int> waveRange;
     
     Atomic<float> width {0.1f};
+    
+    Atomic<float> glideTime { 100.f };
 
     
     

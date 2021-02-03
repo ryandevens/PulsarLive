@@ -21,7 +21,7 @@
 class OwnedPulsaret : public Pulsaret
 {
 public:
-    OwnedPulsaret(juce::OwnedArray<OwnedPulsaret>& p, PulsaretTable& t);
+    OwnedPulsaret(juce::OwnedArray<OwnedPulsaret>& p);
     ~OwnedPulsaret();
     
     void prepare(double mSampleRate);
@@ -53,6 +53,7 @@ public:
     }
     
     juce::AudioBuffer<float>& getEnv();
+    
 private:
     float freq;
     bool trigger = true;
