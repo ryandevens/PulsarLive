@@ -18,9 +18,7 @@ public:
     ~NameFeel();
     
     Font getLabelFont(Label&) override;
-    
-    
-    
+
 
 private:
     

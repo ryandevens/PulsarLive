@@ -12,6 +12,9 @@
 
 #include "Pulsaret.h"
 #include "Envelope.h"
+#include "PulsaretTable.h"
+
+
 
 
 
@@ -21,25 +24,23 @@
 class OwnedPulsaret : public Pulsaret
 {
 public:
-    OwnedPulsaret(juce::OwnedArray<OwnedPulsaret>& p, PulsaretTable& t);
+    OwnedPulsaret();
     ~OwnedPulsaret();
     
     void prepare(double mSampleRate);
     void setTable(int selection);
     void setFrequency (float frequency);
-
-    void moveToBack(OwnedPulsaret& p);
+    void calculateDeltas(float freq);
+    
     void setRunning() override;
     bool isFree = true;
+    
     float getNextSample() noexcept;
     
     juce::AudioBuffer<float>& getBuffer();
     
     void resetPhase() override;
-    
-    PulsaretTable& pulsaretTable;
-    
-    
+
     void setLengthInSamples(float numSamples, float pulsarPeriod);
     void isSingleCycle(bool is);
     void setContinuous(bool test);
@@ -53,7 +54,11 @@ public:
     }
     
     juce::AudioBuffer<float>& getEnv();
+    
+    PulsaretTable pulsaretTable;
 private:
+    
+    float pRatio = 2.f; // playback or pitchRatio.  Changing coefficient between 0.5 and 2.0 that will multiply freq or delta
     float freq;
     bool trigger = true;
     bool singleCycle = true;
@@ -61,9 +66,9 @@ private:
     
     double mSampleRate = 0;
     Envelope env;
-    int tableSize;
-    
-    int pulsarPeriodInSamples = 100;
+    Envelope penv;
+
+    int pulsarPeriodInSamples;
     float currentIndex = 0.0f;
     float tableDelta = 0.0f;
     float cycleSamples = 1;
@@ -71,8 +76,6 @@ private:
     int cycles = 1;
     int numCycles = 1;
     
-    
-    
-    // a reference to the array that holds this OwnedPulsaret
-    juce::OwnedArray<OwnedPulsaret>& pulsaretArray;
+    int tableSize = 1024;
+   
 };

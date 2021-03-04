@@ -11,18 +11,19 @@
 #include "PulsaretTable.h"
 
 PulsaretTable::PulsaretTable()
-: sineTable(1, 1024), sincTable(1, 1024), triTable(1, 1024), sawTable(1, 1024), pulsaretTable(1, 1024)
+: sineTable(1, 1024), sincTable(1, 1024), triTable(1, 1024), sawTable(1, 1024)
 {
     createSineTable();
     createSincTable();
     createTriTable();
     createSawTable();
     
-    tableArray.add(&sineTable);
-    tableArray.add(&sincTable);
-    tableArray.add(&triTable);
-    tableArray.add(&sawTable);
-    tableArray.add(&sineTable);
+//    createTables();
+    //tableArray.add(&sineTable);
+//    tableArray.add(&sincTable);
+//    tableArray.add(&triTable);
+//    tableArray.add(&sawTable);
+    //tableArray.add(&sineTable);
     
 }
 
@@ -31,12 +32,25 @@ PulsaretTable::~PulsaretTable()
     
 }
 
+void PulsaretTable::createTables()
+{
+    createSineTable();
+    createSincTable();
+    createTriTable();
+    createSawTable();
+    
+    
+}
+
 void PulsaretTable::setTable(float selection)
 {
+    
     normalWaveIndex = selection; // 0  to 1 version of waveIndex
     floatWaveIndex = NormalisableRange<float>(0.f, 3.f, 0.001f, 1.f).convertFrom0to1(selection); // converted to size of array
     intWaveIndex = floatWaveIndex.get(); // cast to int
     waveFraction = floatWaveIndex.get() - intWaveIndex.get(); // overlap
+    
+    
 }
 
 /*
@@ -45,18 +59,39 @@ void PulsaretTable::setTable(float selection)
 */
 juce::AudioBuffer<float>& PulsaretTable::getTable()
 {
-    return *tableArray[intWaveIndex.get()];
+    switch(intWaveIndex.get())
+    {
+        case 0:  return sineTable;
+            break;
+        case 1: return triTable;
+            break;
+        case 2: return sawTable;
+            break;
+        case 3: return sincTable;
+            break;
+        default: return sineTable;
+            break;
+    }
+    //return *tableArray[intWaveIndex.get()];
 }
 
 juce::AudioBuffer<float>& PulsaretTable::getNextTable()
 {
-    if (intWaveIndex.get() == tableArray.size())
+    switch(intWaveIndex.get() + 1)
     {
-        return *tableArray[intWaveIndex.get()];
-    }
-    else
-    {
-        return *tableArray[intWaveIndex.get() + 1];
+        case 0:  return sineTable;
+            break;
+        case 1: return triTable;
+            break;
+        case 2: return sawTable;
+            break;
+        case 3: return sincTable;
+            break;
+        case 4: return sineTable;
+            break;
+            
+        default: return sineTable;
+            break;
     }
     
 }
@@ -73,8 +108,8 @@ void PulsaretTable::setEnvLevel(float envLevel)
     floatWaveIndex = envLevel;
     waveFraction = floatWaveIndex.get() - intWaveIndex.get();
     
-    if(intWaveIndex.get() > tableArray.size())
-        intWaveIndex = tableArray.size() - 1;
+//    if(intWaveIndex.get() > tableArray.size())
+//        intWaveIndex = tableArray.size() - 1;
 }
 
 float PulsaretTable::getWaveIndex()
@@ -86,41 +121,43 @@ float PulsaretTable::getWaveIndex()
 void PulsaretTable::createSineTable()
 {
     
-    sineTable.setSize (1, (int) tableOrder + 1);
+    sineTable.setSize (1, (int) tableSize + 1);
     sineTable.clear();
 
     auto* buffWrite = sineTable.getWritePointer (0);
 
-    auto angleDelta = juce::MathConstants<double>::twoPi / (double) (tableOrder - 1);
+    auto angleDelta = juce::MathConstants<double>::twoPi / (double) (tableSize - 1);
     auto pi = juce::MathConstants<double>::pi;
     double currentAngle = -pi;
     
-    for (unsigned int i = 0; i < tableOrder; ++i)
+    for (unsigned int i = 0; i < tableSize; ++i)
     {
         float sample;
         sample = std::sin(currentAngle);
+        
+        
         buffWrite[i] += sample;
         currentAngle += angleDelta;
     }
         
 
-    buffWrite[tableOrder] = buffWrite[0];
+    buffWrite[tableSize] = buffWrite[0];
 }
 
 
 /*=========================================================*/
 void PulsaretTable::createSincTable()
 {
-    sincTable.setSize (1, (int) tableOrder + 1);
+    sincTable.setSize (1, (int) tableSize + 1);
     sincTable.clear();
 
     auto* buffWrite = sincTable.getWritePointer (0);
     
-    auto angleDelta = juce::MathConstants<double>::twoPi / (double) (tableOrder - 1);
+    auto angleDelta = juce::MathConstants<double>::twoPi / (double) (tableSize - 1);
     auto pi = juce::MathConstants<double>::pi;
     double currentAngle = -pi;
     
-    for (unsigned int i = 0; i < tableOrder; ++i)
+    for (unsigned int i = 0; i < tableSize; ++i)
     {
         float sample;
         
@@ -138,12 +175,12 @@ void PulsaretTable::createSincTable()
         currentAngle += angleDelta;
     }
     
-    buffWrite[tableOrder] = buffWrite[0];
+    buffWrite[tableSize] = buffWrite[0];
 }
 
 void PulsaretTable::createTriTable()
 {
-    triTable.setSize (1, (int) tableOrder + 1);
+    triTable.setSize (1, (int) tableSize + 1);
     triTable.clear();
     auto* buffWrite = triTable.getWritePointer (0);
 
@@ -152,12 +189,12 @@ void PulsaretTable::createTriTable()
         
     for (auto harmonic = 0; harmonic < juce::numElementsInArray (harmonics); harmonic += 2)
     {
-        auto angleDelta = juce::MathConstants<double>::twoPi / (double) (tableOrder - 1) * harmonics[harmonic];
+        auto angleDelta = juce::MathConstants<double>::twoPi / (double) (tableSize - 1) * harmonics[harmonic];
         auto currentAngle = 0.0;
         
         float harmonicAmp = 0.9f / (harmonics[harmonic] * harmonics[harmonic]);
        
-        for (unsigned int i = 0; i < tableOrder; ++i)
+        for (unsigned int i = 0; i < tableSize; ++i)
         {
             auto sample = std::sin (currentAngle);
             buffWrite[i] += (float) sample * harmonicAmp; //harmonicWeights[harmonic];
@@ -167,13 +204,13 @@ void PulsaretTable::createTriTable()
     
     for (auto harmonic = 1; harmonic < juce::numElementsInArray (harmonics); harmonic += 2)
     {
-        auto angleDelta = juce::MathConstants<double>::twoPi / (double) (tableOrder - 1) * harmonics[harmonic];
+        auto angleDelta = juce::MathConstants<double>::twoPi / (double) (tableSize - 1) * harmonics[harmonic];
         auto pi = juce::MathConstants<double>::pi;
         auto currentAngle = pi;
         
         float harmonicAmp = 0.9f / (harmonics[harmonic] * harmonics[harmonic]);
         
-        for (unsigned int i = 0; i < tableOrder; ++i)
+        for (unsigned int i = 0; i < tableSize; ++i)
         {
             auto sample = std::sin (currentAngle);
             buffWrite[i] += (float) sample * harmonicAmp;
@@ -181,12 +218,12 @@ void PulsaretTable::createTriTable()
         }
     }
     
-    buffWrite[tableOrder] = buffWrite[0];
+    buffWrite[tableSize] = buffWrite[0];
 }
 
 void PulsaretTable::createSawTable()
 {
-    sawTable.setSize (1, (int) tableOrder + 1);
+    sawTable.setSize (1, (int) tableSize+ 1);
     sawTable.clear();
     auto* buffWrite = sawTable.getWritePointer (0);
     
@@ -195,12 +232,12 @@ void PulsaretTable::createSawTable()
     for (auto i = 0; i < harmonics; i++)
     {
         float harmonic = i + 1;
-        auto angleDelta = juce::MathConstants<double>::twoPi / (double) (tableOrder - 1) * harmonic;
+        auto angleDelta = juce::MathConstants<double>::twoPi / (double) (tableSize - 1) * harmonic;
         auto currentAngle = 0.0;
         
         float harmonicAmp = 0.9f / (harmonic * harmonic);
         
-        for (unsigned int i = 0; i < tableOrder; ++i)
+        for (unsigned int i = 0; i < tableSize; ++i)
         {
             auto sample = std::sin (currentAngle);
             buffWrite[i] += (float) sample * harmonicAmp; //harmonicWeights[harmonic];
@@ -208,7 +245,7 @@ void PulsaretTable::createSawTable()
         }
     }
 
-    buffWrite[tableOrder] = buffWrite[0];
+    buffWrite[tableSize] = buffWrite[0];
 }
 
 

@@ -10,9 +10,6 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
-#include "Pulsaret.h"
-#include "PulsaretVisualizer.h"
-#include "WaveTableVisualizer.h"
 #include "MixFeel.h"
 #include "NameFeel.h"
 
@@ -40,7 +37,7 @@ public:
    
 
 private:
-    WaveTableVisualizer  wtVisualizer;
+
 
     bool flashState = false;
     float alphaSkew = 0.f;
@@ -53,10 +50,7 @@ private:
     MixFeel mixFeel;
     NameFeel nameFeel;
     std::unique_ptr<juce::TextButton> triggerButton;
-    
-    //std::unique_ptr<juce::ComboBox> box;
-    std::unique_ptr<PulsaretVisualizer> pulsaretVisualizer;
-    //std::unique_ptr<WaveTableVisualizer> envVisualizer;
+
     
     std::unique_ptr<juce::Slider>   ampSlider;
     std::unique_ptr<Label>          ampLabel;
@@ -106,6 +100,8 @@ private:
     std::unique_ptr<Slider>         sustainSlider;
     std::unique_ptr<Slider>         releaseSlider;
     
+    std::unique_ptr<Slider>         glideSlider;
+    
     std::unique_ptr<Label>          nameLabel;
     
     using Attachment = juce::AudioProcessorValueTreeState::SliderAttachment;
@@ -143,6 +139,8 @@ private:
     std::unique_ptr<Attachment>     decayAttachment;
     std::unique_ptr<Attachment>     sustainAttachment;
     std::unique_ptr<Attachment>     releaseAttachment;
+    
+    std::unique_ptr<Attachment>     glideAttachment;
     
     std::unique_ptr<AudioProcessorValueTreeState::ButtonAttachment>     triggerAttachment;
     

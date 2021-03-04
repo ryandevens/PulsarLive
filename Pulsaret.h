@@ -32,7 +32,8 @@ public:
 protected:
     PulsaretTable pulsaretTable;
     double mSampleRate;
-    int tableSize;
+
     float currentIndex = 0.0f;
     float tableDelta = 0.0f;
+    int tableSize = 1024;
 };

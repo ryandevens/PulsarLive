@@ -10,7 +10,7 @@
 
 #include "PulsarTrain.h"
 
-PulsarTrain::PulsarTrain(juce::OwnedArray<OwnedPulsaret>& array, juce::OwnedArray<OwnedPulsaret>& array2) : pulsaretArray(array), pulsaretArray2(array2)
+PulsarTrain::PulsarTrain()
 
 {
     setTrigger(3, 2);
@@ -30,10 +30,12 @@ PulsarTrain::~PulsarTrain()
 
 void PulsarTrain::prepare(double sampleRate)
 {
+    pulsaret1.prepare(sampleRate);
+    pulsaret2.prepare(sampleRate);
     mSampleRate = sampleRate;
-    smoothFund.reset(mSampleRate, 2.5);
-    smoothForm.reset(mSampleRate, 2.5);
-    smoothForm2.reset(mSampleRate, 2.5);
+    smoothFund.reset(mSampleRate, glideTime.get());
+    smoothForm.reset(mSampleRate, glideTime.get());
+    smoothForm2.reset(mSampleRate, glideTime.get());
     
     fundRange.setStart(1);
     fundRange.setEnd(500);
@@ -58,25 +60,9 @@ void PulsarTrain::startTrain()
 
 void PulsarTrain::setFrequencies(float fundFreq, float form1, float form2)
 {
-    
     smoothFund.setTargetValue(fundFreq);
     smoothForm.setTargetValue(form1);
     smoothForm2.setTargetValue(form2);
-    
-//    if(inHarmonicMode)
-//    {
-//        
-//        setHarmonicFormants(fundFreq, form1, form2);
-//        smoothFund.setTargetValue(fundFreq);
-//    }
-//    if(!inHarmonicMode)
-//    {
-//        smoothFund.setTargetValue(fundFreq);
-//        smoothForm.setTargetValue(form1);
-//        smoothForm2.setTargetValue(form2);
-//    }
-    //DBG(smoothFund.getNextValue());
-
 }
 
 void PulsarTrain::setHarmonicFormants(float fund, float form1, float form2)
@@ -110,8 +96,7 @@ void PulsarTrain::setHarmonicFormants(float fund, float form1, float form2)
 */
 int PulsarTrain::getPeriod()
 {
-    //DBG(mFundFreq.get());
-//    smoothFund.setTargetValue(mFundFreq.get());
+
     auto freq = mFundFreq.get();
     
     if(fundIsSpread.get())
@@ -128,130 +113,115 @@ int PulsarTrain::getPeriod()
 }
 /*========================================================================*/
 
-
-
-
 /*========================================================================*/
 
 
 /*
     This only sets 1 pulsaret running in each array, we iterate to find the first one that isn't already running
+    Calculations are not split into sub equations because I am not going to organize all params into an array of 2
+    Show me a way that I can use one function but called at different times based on if pulsaret1.isFree / pulsaret2.isFree
+    One might be free and the other not (overlapping width)  I could iterate in this function and pass the iteration value at the
+    function call but then all the params would need to be associated with an index of their own and making an array for each pair of params
+    form/form2, wave/wave2, 
 */
 void PulsarTrain::triggerPulsaret()
 {
 
-    for (int i = 0; i < pulsaretArray.size(); ++i)
+    pulsaret1.setAsHit();
+    pulsaret1.isSingleCycle(isSingleCycle);
+    pulsaret1.setLengthInSamples(pulsaretSamples1, samplesRemainingInPeriod);
+    if (pulsaret1.isFree)
     {
-        //pulsaretArray[i]->setContinuous(isContinuous);
-        pulsaretArray[i]->setAsHit();
-        pulsaretArray[i]->isSingleCycle(isSingleCycle);
-        pulsaretArray[i]->setLengthInSamples(pulsaretSamples1, samplesRemainingInPeriod);
-        
-        if (pulsaretArray[i]->isFree) // find first free pulsaret in array
+        float freq;
+        if(formIsSpread.get())
         {
-            float freq;
-
-            if(formIsSpread.get())
+            juce::Random rand1;
+            if(rand1.nextFloat() < mFormRand.get()) // As the value approaches 1.0, we approach a 100% chance we get a random
             {
-                juce::Random rand1;
-                if(rand1.nextFloat() < mFormRand.get()) // As the value approaches 1.0, we approach a 100% chance we get a random
-                {
-                    freq = rand1.nextInt(formRange);
-                }
-                else
-                {
-                    freq = mFormFreq.get();
-                }
+                freq = rand1.nextInt(formRange);
             }
             else
             {
                 freq = mFormFreq.get();
             }
-            
-            if(waveIsSpread.get())
-            {
-                juce::Random randWave;
-                if(randWave.nextFloat() < waveRand.get())
-                {
-                    auto waveNum = rand.nextInt(waveRange);
-                    pulsaretArray[i]->pulsaretTable.setTable(waveNum / 100.f);
-                }
-            }
-            else
-            {
-                pulsaretArray[i]->pulsaretTable.setTable(waveType.get() / 100.f);
-            }
-
-            
-            pulsaretArray[i]->setFrequency(freq); // get pulsaret ready to read
-            pulsaretArray[i]->setRunning();
-
         }
+        else
+        {
+            freq = mFormFreq.get();
+        }
+        
+        if(waveIsSpread.get())
+        {
+            juce::Random randWave;
+            if(randWave.nextFloat() < waveRand.get())
+            {
+                auto waveNum = rand.nextInt(waveRange);
+                pulsaret1.pulsaretTable.setTable(waveNum / 100.f);
+            }
+        }
+        else
+        {
+            pulsaret1.pulsaretTable.setTable(waveType.get() / 100.f);
+        }
+        pulsaret1.setFrequency(freq); // get pulsaret ready to read
+        pulsaret1.setRunning();
+        
     }
     
-    for (int j = 0; j < pulsaretArray2.size(); ++j)
-    {
-        
-        //pulsaretArray2[j]->setContinuous(isContinuous);
-        pulsaretArray2[j]->setAsHit();
-        pulsaretArray2[j]->isSingleCycle(isSingleCycle);
-        pulsaretArray2[j]->setLengthInSamples(pulsaretSamples2, samplesRemainingInPeriod);
-        
-        if (pulsaretArray2[j]->isFree) // find first free pulsaret in array
-        {
-            float freq;
 
-            if(formIsSpread2.get())
+    pulsaret2.setAsHit();
+    pulsaret2.isSingleCycle(isSingleCycle);
+    pulsaret2.setLengthInSamples(pulsaretSamples2, samplesRemainingInPeriod);
+    
+    if (pulsaret2.isFree) // find first free pulsaret in array
+    {
+        float freq;
+        
+        if(formIsSpread2.get())
+        {
+            juce::Random rand2;
+            if(rand2.nextFloat() < mFormRand2.get()) // As the value approaches 1.0, we approach a 100% chance we get a random
             {
-                juce::Random rand2;
-                if(rand2.nextFloat() < mFormRand2.get()) // As the value approaches 1.0, we approach a 100% chance we get a random
-                {
-                    freq = rand2.nextInt(formRange2);
-                }
-                else
-                {
-                    freq = mFormFreq2.get();
-                }
+                freq = rand2.nextInt(formRange2);
             }
             else
             {
                 freq = mFormFreq2.get();
             }
-            
-            if(waveIsSpread.get())
-            {
-                juce::Random randWave;
-                if(randWave.nextFloat() < waveRand.get())
-                {
-                    auto waveNum = rand.nextInt(waveRange);
-                    pulsaretArray2[j]->pulsaretTable.setTable(waveNum / 100.f);
-                }
-            }
-            else
-            {
-                pulsaretArray2[j]->pulsaretTable.setTable(waveType.get() / 100.f);
-            }
-
-             // have to pass the period to avoid overlap
-            pulsaretArray2[j]->setFrequency(freq); // get pulsaret ready to read
-            //pulsaretArray2[i]->triggerEnv();
-            pulsaretArray2[j]->setRunning();
-
         }
+        else
+        {
+            freq = mFormFreq2.get();
+        }
+        
+        if(waveIsSpread.get())
+        {
+            juce::Random randWave;
+            if(randWave.nextFloat() < waveRand.get())
+            {
+                auto waveNum = rand.nextInt(waveRange);
+                pulsaret2.pulsaretTable.setTable(waveNum / 100.f);
+            }
+        }
+        else
+        {
+            pulsaret2.pulsaretTable.setTable(waveType.get() / 100.f);
+        }
+        
+        // have to pass the period to avoid overlap
+        pulsaret2.setFrequency(freq);
+        pulsaret2.setRunning();
+        
     }
+    
 }
 
 void PulsarTrain::triggerPulsaretWithNoAmp()
 {
-    for (int i = 0; i < pulsaretArray.size(); ++i)
-    {
-        pulsaretArray[i]->setAsMiss();
-    }
-    for (int j = 0; j < pulsaretArray2.size(); ++j)
-    {
-        pulsaretArray2[j]->setAsMiss();
-    }
+    pulsaret1.setAsMiss();
+    pulsaret2.setAsMiss();
 }
+
 void PulsarTrain::updateFundamental()
 {
     pulsarPeriod = (1 / mFundFreq.get()) * mSampleRate;
@@ -263,29 +233,6 @@ void PulsarTrain::updateFundamental()
 
 void PulsarTrain::setPulsaretWidth(float width)
 {
-//    if (width > 0.98)
-//    {
-//
-//        isContinuous = true;
-//        isSingleCycle = false;
-//    }
-//
-//
-//    if(width <= 0.98 && width >= 0.02)
-//    {
-//
-//        isContinuous = false;
-//        isSingleCycle = false;
-//
-//        float dutyCycle = getPeriod() * width;
-//        pulsaretSamples1 = dutyCycle;
-//
-//
-//        float dutyCycle2 = getPeriod() * width;
-//        pulsaretSamples2 = dutyCycle2;
-//
-//    }
-    
         isSingleCycle = false;
     
         float dutyCycle = getPeriod() * width;
@@ -305,10 +252,6 @@ void PulsarTrain::setPulsaretWidth(float width)
         pulsaretSamples2 = (1/mFormFreq2.get()) * mSampleRate;
 
     }
-    
-    
-    
-
 }
 
 
@@ -325,9 +268,7 @@ void PulsarTrain::generateNextBlock(juce::AudioBuffer<float>& buffer)
         mFundFreq = smoothFund.getNextValue();
         mFormFreq = smoothForm.getNextValue();
         mFormFreq2 = smoothForm2.getNextValue();
-        
-        
-        
+
         if (samplesRemainingInPeriod == 0) // we've gone through a whole pulsar period
         {
             setPulsaretParamsAndTrigger();
@@ -337,20 +278,15 @@ void PulsarTrain::generateNextBlock(juce::AudioBuffer<float>& buffer)
         
         float sample = 0.f;
         
-        for (int pulsaretIndex = 0; pulsaretIndex < pulsaretArray.size(); ++pulsaretIndex)
+        if (!pulsaret1.isFree) // if the pulsaret is still running i.e. NOT free (affected by width)
         {
-            if (pulsaretArray[pulsaretIndex]->isFree)
-                break;
-            //pulsaretArray[pulsaretIndex]->setFrequency(mFormFreq.get());
-            sample += pulsaretArray[pulsaretIndex]->getNextSample();
+            sample += pulsaret1.getNextSample();
         }
-        for (int pulsaretIndex = 0; pulsaretIndex < pulsaretArray2.size(); ++pulsaretIndex)
+        if (!pulsaret2.isFree)
         {
-            if (pulsaretArray2[pulsaretIndex]->isFree)
-                break;
-            //pulsaretArray2[pulsaretIndex]->setFrequency(mFormFreq2.get());
-            sample += pulsaretArray2[pulsaretIndex]->getNextSample();
+            sample += pulsaret2.getNextSample();
         }
+        
         
         /*
             Doing this because rand object can only generate within a range if it is in integer
@@ -359,23 +295,19 @@ void PulsarTrain::generateNextBlock(juce::AudioBuffer<float>& buffer)
         auto pLeft = panL.get() / 100.f;
         auto pRight = panR.get() / 100.f;
         auto amp = mAmp.get() / 100.f;
-        
-        
-       // DBG(env.generateSample());
-       
 
-        
         auto envGain = env.generateSample();
         
-        buffWrite[0][i] = sample * amp * pLeft * envGain ;
-        buffWrite[1][i] = sample * amp * pRight * envGain;
         
-        if (decay >= 9000.f)
+        if (buffer.getNumChannels() == 1)
         {
-            buffWrite[0][i] = sample * amp * pLeft;
-            buffWrite[1][i] = sample * amp * pRight;
+            buffWrite[0][i] = sample * amp * envGain;
         }
-        
+        else if (buffer.getNumChannels() > 1)
+        {
+            buffWrite[0][i] = sample * amp * pLeft * envGain ;
+            buffWrite[1][i] = sample * amp * pRight * envGain;
+        }
         
         samplesRemainingInPeriod--;
         
@@ -493,13 +425,13 @@ void PulsarTrain::setPulsaretParamsAndTrigger()
 
 void PulsarTrain::checkStatus()
 {
-    for (int i = 0; i < pulsaretArray.size(); ++i)
-    {
-        if (!pulsaretArray[i]->isFree) // 
-        {
-            needsCalculation = true;
-        }
-    }
+//    for (int i = 0; i < pulsaretArray.size(); ++i)
+//    {
+//        if (!pulsaret1.isFree) //
+//        {
+//            needsCalculation = true;
+//        }
+//    }
 }
 
 float PulsarTrain::getFlashState()
@@ -540,7 +472,11 @@ void PulsarTrain::setTrigger(int on, int off)
 
 void PulsarTrain::setGlideTime(float glideTime)
 {
+    
     auto seconds = glideTime / 1000;
+    smoothFund.reset(mSampleRate, seconds);
+    smoothForm.reset(mSampleRate, seconds);
+    smoothForm2.reset(mSampleRate, seconds);
 }
 
 bool PulsarTrain::getHarmonicModeStatus()
@@ -561,6 +497,7 @@ float PulsarTrain::getFormFreq2()
 void PulsarTrain::triggerEnv()
 {
     setEnv();
+    setGlideTime(glideTime.get());
     env.setTrigger(true);
 }
 
@@ -625,7 +562,7 @@ void PulsarTrain::updateParams(float f, float fSpread, float fRand,
     release = rel;
     
     glideTime = gTime;
-    setGlideTime(gTime);
+//    setGlideTime(gTime);
     
     waveType = w;
     waveSpread = wSpread;

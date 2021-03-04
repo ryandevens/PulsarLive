@@ -11,6 +11,7 @@
 #pragma once
 #include <JuceHeader.h>
 
+
 /*
  This is more than a visualizer.  The visualizer both draws the envelope, and puts its values into the buffer.  (maybe I will make it so it only draws it).
  The Envelope class allows the user to get values from that buffer
@@ -98,8 +99,8 @@ private:
     float tableDelta = 0.0f;
     float currentValue = 0.f;
     double mSampleRate;
-    const unsigned int tableOrder = 1 << 7;
-    int tableSize;
+
+
     
     Atomic<double> sliderVal = {0.5f};
     Atomic<float> envVal = {0.5f};
@@ -108,7 +109,7 @@ private:
     float totalMilliseconds;
     
 
-   
+    int tableSize = 1024;
     
     
     

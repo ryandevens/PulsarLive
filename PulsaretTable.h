@@ -11,6 +11,7 @@
 #pragma once
 #include <JuceHeader.h>
 
+
 class PulsaretTable
 {
 public:
@@ -21,7 +22,7 @@ public:
     void createSincTable();
     void createTriTable();
     void createSawTable();
-
+    void createTables();
     
     void setTable(float selection);
     juce::AudioBuffer<float>& getTable();
@@ -32,7 +33,11 @@ public:
     float getWaveIndex();
     
 private:
-    juce::AudioBuffer<float> pulsaretTable;
+    //juce::OwnedArray<AudioBuffer<float>> tableArray;
+    //juce::OwnedArray<AudioBuffer<float>> tableArray;
+    juce::Array<AudioBuffer<float>> tableArray;
+    
+    //juce::AudioBuffer<float> pulsaretTable;
     juce::AudioBuffer<float> sineTable;
     juce::AudioBuffer<float> sincTable;
     juce::AudioBuffer<float> triTable;
@@ -48,9 +53,8 @@ private:
     Atomic<float> normalWaveIndex {0.f};
     Atomic<int> intWaveIndex {0}; // selected wavetable, rounded down
     
-    juce::OwnedArray<AudioBuffer<float>> tableArray;
     
-    int tableSize;
+    int tableSize = 1024;
     float currentIndex = 0.0f, tableDelta = 0.0f;
-    const unsigned int tableOrder = 1 << 10;
+    
 };

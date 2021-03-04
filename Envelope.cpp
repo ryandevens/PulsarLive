@@ -12,7 +12,7 @@
 
 Envelope::Envelope() : envelopeTable(1, 1024)
 {
-    tableSize = envelopeTable.getNumSamples() - 1;
+    
     createGaussian();
 }
 

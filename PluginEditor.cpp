@@ -11,10 +11,9 @@
 
 //==============================================================================
 PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
-: AudioProcessorEditor (&p), audioProcessor (p), wtVisualizer(p.getEnvBuffer()) //, pulsaretVisualizer(p)
+: AudioProcessorEditor (&p), audioProcessor (p)
 {
-    
-    //setSize (530, 330);
+
     setSize(530, 400);
     startTimerHz(60);
     
@@ -29,47 +28,46 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     
     setLookAndFeel(&mixFeel);
     
-    pulsaretVisualizer = std::make_unique<PulsaretVisualizer>(p);
-    pulsaretVisualizer->setBounds(15, 50, getWidth() - 30, getHeight() - 65);
-    addAndMakeVisible(pulsaretVisualizer.get());
-    
-//    wtVisualizer.setBounds(15, 330, getWidth()-5, getHeight() - 65);
-//    addAndMakeVisible(wtVisualizer);
-    
     triggerButton = std::make_unique<TextButton>();
     triggerButton->setBounds(15, 50, getWidth() - 30, getHeight() - 65);
     triggerButton->addListener(this);
     addAndMakeVisible(triggerButton.get());
     
     widthSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearHorizontal, Slider::NoTextBox);
-    widthSlider->setBounds(115, 335, 300, 20);
+    widthSlider->setBounds(125, 335, 300, 20);
     widthSlider->addListener(this);
     widthSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (widthSlider.get());
     
     attackSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    attackSlider->setBounds(25, getHeight()-365, 10, 60);
+    attackSlider->setBounds(25, getHeight()-85, 10, 60);
     attackSlider->addListener(this);
     attackSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (attackSlider.get());
     
     decaySlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    decaySlider->setBounds(45, getHeight()-365, 10, 60);
+    decaySlider->setBounds(45, getHeight()-85, 10, 60);
     decaySlider->addListener(this);
     decaySlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (decaySlider.get());
     
     sustainSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    sustainSlider->setBounds(65, getHeight()-365, 10, 60);
+    sustainSlider->setBounds(65, getHeight()-85, 10, 60);
     sustainSlider->addListener(this);
     sustainSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (sustainSlider.get());
     
     releaseSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
-    releaseSlider->setBounds(85, getHeight()-365, 10, 60);
+    releaseSlider->setBounds(85, getHeight()-85, 10, 60);
     releaseSlider->addListener(this);
     releaseSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (releaseSlider.get());
+    
+    glideSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
+    glideSlider->setBounds(475, getHeight()-85, 10, 60);
+    glideSlider->addListener(this);
+    glideSlider->setLookAndFeel(&mixFeel);
+    addAndMakeVisible (glideSlider.get());
     /*==================================================================================================*/
     /*========================================== FUNDAMENTAL ===========================================*/
     fundMultiSlider = std::make_unique<Slider>(Slider::SliderStyle::ThreeValueVertical, Slider::NoTextBox);
@@ -196,19 +194,19 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     /*==================================================================================================*/
     /*============================================= INTER ==============================================*/
     interSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
-    interSlider->setBounds(495, 80, 10, 160);
+    interSlider->setBounds(490, 80, 10, 160);
     interSlider->addListener(this);
     interSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (interSlider.get());
     
     triggerOnSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
-    triggerOnSlider->setBounds(455, 80, 20, 160);
+    triggerOnSlider->setBounds(450, 80, 20, 160);
     triggerOnSlider->addListener(this);
     triggerOnSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (triggerOnSlider.get());
     
     triggerOffSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
-    triggerOffSlider->setBounds(475, 80, 20, 160);
+    triggerOffSlider->setBounds(470, 80, 20, 160);
     triggerOffSlider->addListener(this);
     triggerOffSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (triggerOffSlider.get());
@@ -330,6 +328,8 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     sustainAttachment = std::make_unique<Attachment>(audioProcessor.e, "Sustain Level", *sustainSlider);
     releaseAttachment = std::make_unique<Attachment>(audioProcessor.e, "Release", *releaseSlider);
     
+    glideAttachment = std::make_unique<Attachment>(audioProcessor.e, "Glide Time", *glideSlider);
+    
     
     ampSpreadSlider->setValue(0);
     waveSpreadSlider->setValue(0);
@@ -381,15 +381,15 @@ void PulsarAudioProcessorEditor::buttonStateChanged(Button* button)
     //wtVisualizer.setBuffer(audioProcessor.getEnvBuffer());
     if(button == triggerButton.get())
     {
-        triggerButton->repaint();
+        //triggerButton->repaint();
         if(button->isDown())
         {
-            audioProcessor.setTrainRunning();
+            audioProcessor.triggerPulsarTrain();
             
         }
         else
         {
-            audioProcessor.setTrainStopped();
+            audioProcessor.releasePulsarTrain();
         }
     }
 }
@@ -401,9 +401,7 @@ void PulsarAudioProcessorEditor::sliderValueChanged(Slider* s)
     {
         double spread = fundSpreadSlider->getValue();
         double freq = fundSlider->getValue();
-        float hue = NormalisableRange<float>(1, 1000, 1, 0.5).convertTo0to1(freq);
-        juce::Colour c(hue, 1-hue, hue/2, hue*4);
-        pulsaretVisualizer->setNewWaveColour(c);
+        
         
         fundMultiSlider->setNormalisableRange(juce::NormalisableRange<double>(1, 1000, 1, 0.5));
         if (spread < 15)
@@ -424,9 +422,7 @@ void PulsarAudioProcessorEditor::sliderValueChanged(Slider* s)
     {
         double spread = formSpreadSlider->getValue();
         double freq = formFreqSlider->getValue();
-        float sat = NormalisableRange<float>(100, 16000, 1, 0.5).convertTo0to1(freq);
         
-        pulsaretVisualizer->setWaveSat(sat);
         
         formMultiSlider->setNormalisableRange(juce::NormalisableRange<double>(100, 16000, 1, 0.25));
         if (spread < 15)
@@ -448,10 +444,7 @@ void PulsarAudioProcessorEditor::sliderValueChanged(Slider* s)
     {
         double spread = formSpreadSlider2->getValue();
         double freq = formFreqSlider2->getValue();
-        float hue = NormalisableRange<float>(100, 16000, 1, 0.5).convertTo0to1(freq);
         
-        pulsaretVisualizer->setWaveHue(hue);
-
         formMultiSlider2->setNormalisableRange(juce::NormalisableRange<double>(100, 16000, 1, 0.25));
         if (spread < 15)
         {
@@ -472,10 +465,6 @@ void PulsarAudioProcessorEditor::sliderValueChanged(Slider* s)
     {
         double spread = waveSpreadSlider->getValue();
         double selection = waveSlider->getValue();
-        
-        float sat = NormalisableRange<float>(0, 100, 1, 1.f).convertTo0to1(selection);
-        juce::Colour c(1-sat, sat/2, sat, sat/4);
-        pulsaretVisualizer->setNewWaveColour(c);
         
         waveMultiSlider->setNormalisableRange(juce::NormalisableRange<double>(0, 100, 0.1, 1));
         if (spread < 98 && spread > 2)
@@ -504,9 +493,7 @@ void PulsarAudioProcessorEditor::sliderValueChanged(Slider* s)
         double spread = ampSpreadSlider->getValue();
         double selection = ampSlider->getValue();
         float val = NormalisableRange<float>(0, 100, 0.1, 1).convertTo0to1(selection);
-        
-        pulsaretVisualizer->setWaveVal(val);
-        alphaSkew = val;
+
         
         ampMultiSlider->setNormalisableRange(juce::NormalisableRange<double>(0, 100, 0.1, 1));
         if (spread <= 98 && spread >= 2)
@@ -558,12 +545,6 @@ void PulsarAudioProcessorEditor::sliderValueChanged(Slider* s)
         panMultiSlider->repaint();
     }
 
-    
-    
-    
-   
-   
-
 }
 
 void PulsarAudioProcessorEditor::comboBoxChanged(ComboBox* box)
@@ -575,24 +556,18 @@ void PulsarAudioProcessorEditor::comboBoxChanged(ComboBox* box)
 
 void PulsarAudioProcessorEditor::repaintPulsaret()
 {
-    //pulsaretVisualizer.repaint();
+    
 }
 void PulsarAudioProcessorEditor::timerCallback()
 {
     if(triggerButton->isDown())
     {
-        pulsaretVisualizer->setAlpha(alphaSkew);
-        auto alpha = jlimit(0.f, 1.f, audioProcessor.getFlashState());
-        pulsaretVisualizer->setNewWaveColour(juce::Colours::ghostwhite.withAlpha(alpha));
-        //pulsaretVisualizer->setNewBackgroundColour(pulsaretVisualizer->get.contrasting());
-        pulsaretVisualizer->repaint();
-        wtVisualizer.repaint();
+
 
     }
     else if (!triggerButton->isDown())
     {
-        pulsaretVisualizer->setAlpha(0.f);
-        pulsaretVisualizer->repaint();
+
     }
     
 }

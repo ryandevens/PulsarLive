@@ -10,10 +10,16 @@
 
 #include "OwnedPulsaret.h"
 
-OwnedPulsaret::OwnedPulsaret(juce::OwnedArray<OwnedPulsaret>& p, PulsaretTable& t) : pulsaretTable(t), pulsaretArray(p)
+OwnedPulsaret::OwnedPulsaret()
 {
-    tableSize = pulsaretTable.getTable().getNumSamples() - 1;
-    env.setTableSize(tableSize +1);
+    setLengthInSamples(102, 1024);
+    pulsaretTable.createTables();
+    tableSize = 1024;
+    
+    env.setTableSize(tableSize);
+    penv.setTableSize(tableSize);
+    
+    
 }
 
 OwnedPulsaret::~OwnedPulsaret()
@@ -26,31 +32,34 @@ void OwnedPulsaret::prepare(double sampleRate)
 {
     mSampleRate = sampleRate;
     env.prepare(sampleRate);
+    penv.prepare(sampleRate);
+    
 }
 
 
 
 
 /*=========================================================*/
-void OwnedPulsaret::setFrequency (float frequency)
+void OwnedPulsaret::setFrequency (float frequency) // for setting externally from pulsar train
 {
     freq = frequency;
-    tableSize = pulsaretTable.getTable().getNumSamples() - 1;
-    auto tableSizeOverSampleRate = (float) tableSize / mSampleRate;
-    tableDelta = frequency * tableSizeOverSampleRate;
-    
-    env.setFrequency(frequency);
-
-    
 }
 
-void OwnedPulsaret::moveToBack(OwnedPulsaret& p)
+void OwnedPulsaret::calculateDeltas(float freq) // for changing based on pulsaret's pitch trajectory
 {
-    pulsaretArray.move(pulsaretArray.indexOf(&p), pulsaretArray.size() - 1);  // put a freed pulsaret to back of array
+    auto tableSizeOverSampleRate = (float) tableSize / mSampleRate;
+    tableDelta = freq * tableSizeOverSampleRate;
+    env.setFrequency(freq);
+    penv.setFrequency(freq);
 }
+
+
 
 float OwnedPulsaret::getNextSample() noexcept
 {
+    
+    
+    
     auto index0 = (unsigned int) currentIndex;
     auto index1 = index0 + 1;
     
@@ -67,15 +76,16 @@ float OwnedPulsaret::getNextSample() noexcept
     auto waveSample1 = value0 + (frac * (value1 - value0));
     waveSample1 *= 1.f - pulsaretTable.getWaveFraction(); // pulsaretTable.getWaveFraction() should equal 0.f if no interp should occur
     
+    
     auto waveSample2 = value2 + (frac * (value3 - value2));
     waveSample2 *= pulsaretTable.getWaveFraction();
     
     auto currentSample = waveSample1 + waveSample2;
 
-    //moveToBack(*this);
-   
-    
     currentIndex += tableDelta;
+    pRatio = 1 + penv.getNextSample(); // penv starts at 0.f so...
+    calculateDeltas(freq * pRatio); // changing delta for next sample
+    
     if (currentIndex > (float) tableSize)
     {
         //env.resetIndex();
@@ -94,10 +104,7 @@ float OwnedPulsaret::getNextSample() noexcept
      */
     if(!singleCycle) // more than one
     {
-        
-//        if(!continuous) //
-//        {
-        
+
             cycles--;
        
             if(cycles == 0)
@@ -105,18 +112,20 @@ float OwnedPulsaret::getNextSample() noexcept
                 isFree = true;
                 cycles = numCycles;
             }
-            
-        //}
+
     }
     
     if (trigger)
     {
+        
         return currentSample;
     }
     else if (!trigger)
     {
         return 0.f;
     }
+    
+    
     
 }
 
@@ -125,8 +134,9 @@ float OwnedPulsaret::getNextSample() noexcept
 void OwnedPulsaret::setLengthInSamples(float numSamples, float pulsarPeriod)
 {
 
+    
     cycleSamples = numSamples;
-    auto pulsaretPeriod = (1/freq) * mSampleRate;
+    float pulsaretPeriod = (1/freq) * mSampleRate;
 
     cycles = cycleSamples / pulsaretPeriod;
     
@@ -140,6 +150,7 @@ void OwnedPulsaret::setLengthInSamples(float numSamples, float pulsarPeriod)
     {
         singleCycle = false;
     }
+    
     numCycles = cycles;
 }
 

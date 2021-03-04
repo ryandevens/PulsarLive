@@ -76,13 +76,7 @@ void MixFeel::drawLinearSlider (Graphics& g, int x, int y, int width, int height
         g.fillRoundedRectangle(centerTick.toFloat(), 5.f);
         g.fillRoundedRectangle(topTick.toFloat(), 5.f);
     }
-//
-        
-        
-        //DBG("slider pos: "); DBG(sliderPos);
-        
 
-    
     
     if (slider.getSliderStyle() == Slider::SliderStyle::LinearHorizontal)
     {

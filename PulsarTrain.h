@@ -14,6 +14,7 @@
 #include <pedal/CurvedEnvelope.hpp>
 
 
+
 /*
     This will be the train of pulsars.  It will take arguments for fundamental frequency.
     This will read from the
@@ -21,9 +22,8 @@
 class PulsarTrain
 {
 public:
-    PulsarTrain(juce::OwnedArray<OwnedPulsaret>& array, juce::OwnedArray<OwnedPulsaret>& array2);
-    
-//    PulsarTrain(Envelope& ampEnv, Envelope& fEnv, Envelope& foEnv, Envelope& pEnv, Envelope& wEnv, juce::OwnedArray<OwnedPulsaret>& array);
+    PulsarTrain();
+
     ~PulsarTrain();
     
     void prepare(double sampleRate);
@@ -71,6 +71,9 @@ public:
     void triggerRelease();
     void setEnv();
     
+    void calcForm();
+    void calcWave();
+    
     void freePulsarets();
     
     void triggerPulsaretWithNoAmp();
@@ -79,6 +82,10 @@ public:
     void checkSpreads();
     
 private:
+    int tableSize = 1024;
+    OwnedPulsaret pulsaret1;
+    OwnedPulsaret pulsaret2;
+    
     pedal::CurvedEnvelope   env;
     bool isContinuous = false;
     bool isSingleCycle = true;
@@ -95,7 +102,7 @@ private:
     
     bool inHarmonicMode = false;
     
-    float glideTime;
+    
     int triggerOn = 1;
 
     int onCount = 1;
@@ -109,12 +116,11 @@ private:
     Atomic<float> flashState { 0.f };
     Atomic<bool> isFlashing { false };
     
-    juce::OwnedArray<OwnedPulsaret>& pulsaretArray;
-    juce::OwnedArray<OwnedPulsaret>& pulsaretArray2;
+    
     
     double mSampleRate;
 
-    int pulsarPeriod;
+    int pulsarPeriod = 1024;
     int pulsarPhase;
     
     
@@ -161,6 +167,8 @@ private:
     juce::Range<int> waveRange;
     
     Atomic<float> width {0.1f};
+    
+    Atomic<float> glideTime { 100.f };
 
     
     

@@ -15,7 +15,7 @@
 */
 Pulsaret::Pulsaret()
 {
-    tableSize = pulsaretTable.getTable().getNumSamples() - 1;
+    
 }
 
 Pulsaret::~Pulsaret()
