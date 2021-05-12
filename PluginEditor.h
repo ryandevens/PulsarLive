@@ -12,12 +12,13 @@
 #include "PluginProcessor.h"
 #include "MixFeel.h"
 #include "NameFeel.h"
+#include "PulsaretVisualizer.h"
 
 
 //==============================================================================
 /**
 */
-class PulsarAudioProcessorEditor  : public juce::AudioProcessorEditor, juce::Button::Listener, juce::Slider::Listener, juce::ComboBox::Listener, juce::Timer
+class PulsarAudioProcessorEditor  : public juce::AudioProcessorEditor, juce::Button::Listener, juce::Slider::Listener, juce::Timer
 {
 public:
     PulsarAudioProcessorEditor (PulsarAudioProcessor&);
@@ -30,14 +31,13 @@ public:
     void buttonClicked(Button* b) override;
     void buttonStateChanged(Button* b) override;
     void sliderValueChanged(Slider* s) override;
-    void comboBoxChanged(ComboBox* box) override;
     void repaintPulsaret();
     
     void timerCallback() override;
    
 
 private:
-
+    PulsaretVisualizer  pulsaretVisualizer;
 
     bool flashState = false;
     float alphaSkew = 0.f;
@@ -92,15 +92,25 @@ private:
     std::unique_ptr<Label>          interLabel;
     std::unique_ptr<Slider>         triggerOnSlider;
     std::unique_ptr<Slider>         triggerOffSlider;
+    std::unique_ptr<Label>          onLabel;
+    std::unique_ptr<Label>          offLabel;
     
     std::unique_ptr<Slider>         widthSlider;
+    std::unique_ptr<Label>          widthLabel;
     
     std::unique_ptr<Slider>         attackSlider;
     std::unique_ptr<Slider>         decaySlider;
     std::unique_ptr<Slider>         sustainSlider;
     std::unique_ptr<Slider>         releaseSlider;
     
+    std::unique_ptr<Label>          attackLabel;
+    std::unique_ptr<Label>          decayLabel;
+    std::unique_ptr<Label>          sustainLabel;
+    std::unique_ptr<Label>          releaseLabel;
+    
+    
     std::unique_ptr<Slider>         glideSlider;
+    std::unique_ptr<Label>          glideLabel;
     
     std::unique_ptr<Label>          nameLabel;
     
@@ -144,6 +154,7 @@ private:
     
     std::unique_ptr<AudioProcessorValueTreeState::ButtonAttachment>     triggerAttachment;
     
+ 
 
     PulsarAudioProcessor& audioProcessor;
     

@@ -108,10 +108,6 @@ private:
     
     float totalMilliseconds;
     
-
     int tableSize = 1024;
-    
-    
-    
     
 };

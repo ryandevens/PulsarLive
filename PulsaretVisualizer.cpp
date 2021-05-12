@@ -11,9 +11,10 @@
 #include "PulsaretVisualizer.h"
 
 //==============================================================================
-PulsaretVisualizer::PulsaretVisualizer(PulsarAudioProcessor& p) : audioProcessor(p), pulsaretTable(p.getPulsaretTable())
+PulsaretVisualizer::PulsaretVisualizer(PulsaretTable& t) : pulsaretTable(t)
 {
     setSize(400, 150);
+    
 }
 
 PulsaretVisualizer::~PulsaretVisualizer()
@@ -29,16 +30,13 @@ void PulsaretVisualizer::paint (juce::Graphics& g)
     float waveIncrement = (float) w / (float) pulsaretTable.getTable().getNumSamples();
     
     juce::Rectangle<int> waveFrame = {0,0, w, h};
+
     
-    
-    
-    juce::Colour wCol = waveColour.withSaturation(waveSat).withHue(waveHue);
-    
-    g.setColour(wCol.darker(0.8f).withHue(bgHue).withSaturation(bgSat));
+   
     g.fillRoundedRectangle(waveFrame.toFloat(), 5.f);
     
-    
-    g.setColour(wCol);
+    auto hue = 1.f - amp;
+    g.setColour(waveColour.withHue(hue).brighter(amp));
 
     juce::Path wavePath;
     wavePath.startNewSubPath(0, frameHalf);
@@ -53,7 +51,6 @@ void PulsaretVisualizer::paint (juce::Graphics& g)
         auto value1 = buffRead1[i] * (1.f - pulsaretTable.getWaveFraction());
         auto value2 = buffRead2[i] * (pulsaretTable.getWaveFraction());
         waveValue = value1 + value2;
-        waveValue *= amp;
         auto y = frameHalf - (waveValue * frameHalf * 0.9f); // 0.9 meant to keep the wave from ever touching edge of frame
         
 
@@ -61,7 +58,9 @@ void PulsaretVisualizer::paint (juce::Graphics& g)
     }
     wavePath.lineTo(w, frameHalf);
 
-    PathStrokeType stroke(3.75f, juce::PathStrokeType::curved);
+   
+    //float lineThickness = juce::NormalisableRange<float>(0.f, 1.f, 1.f, 7.f).convertFrom0to1(ampGlow);
+    PathStrokeType stroke(3.f, juce::PathStrokeType::curved);
     g.strokePath(wavePath, stroke);
     
     if (isDrawing)

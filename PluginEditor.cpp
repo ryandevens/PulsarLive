@@ -11,13 +11,17 @@
 
 //==============================================================================
 PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
-: AudioProcessorEditor (&p), audioProcessor (p)
+: AudioProcessorEditor (&p), audioProcessor (p), pulsaretVisualizer(p.getPulsaretTable())
 {
 
-    setSize(530, 400);
+    setSize(530, 415);
     startTimerHz(60);
     
+    frame = juce::Rectangle<int>(15, 50, getWidth() - 30, getHeight() - 65);
     
+    pulsaretVisualizer.setBounds(frame);
+    addAndMakeVisible(pulsaretVisualizer);
+
     nameLabel = std::make_unique<Label>("","P U L S A R");
     addAndMakeVisible(nameLabel.get());
     nameLabel->setBounds(175, 15, 200, 25);
@@ -29,45 +33,47 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     setLookAndFeel(&mixFeel);
     
     triggerButton = std::make_unique<TextButton>();
-    triggerButton->setBounds(15, 50, getWidth() - 30, getHeight() - 65);
+    triggerButton->setBounds(frame);
     triggerButton->addListener(this);
     addAndMakeVisible(triggerButton.get());
     
-    widthSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearHorizontal, Slider::NoTextBox);
-    widthSlider->setBounds(125, 335, 300, 20);
-    widthSlider->addListener(this);
-    widthSlider->setLookAndFeel(&mixFeel);
-    addAndMakeVisible (widthSlider.get());
     
-    attackSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    attackSlider->setBounds(25, getHeight()-85, 10, 60);
+    
+    attackSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
+    attackSlider->setBounds(195, getHeight()-77, 30, 55);
     attackSlider->addListener(this);
     attackSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (attackSlider.get());
     
-    decaySlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    decaySlider->setBounds(45, getHeight()-85, 10, 60);
+    decaySlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
+    decaySlider->setBounds(235, getHeight()-77, 30, 55);
     decaySlider->addListener(this);
     decaySlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (decaySlider.get());
     
-    sustainSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::TextBoxBelow);
-    sustainSlider->setBounds(65, getHeight()-85, 10, 60);
+    sustainSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
+    sustainSlider->setBounds(275, getHeight()-77, 30, 55);
     sustainSlider->addListener(this);
     sustainSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (sustainSlider.get());
     
-    releaseSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
-    releaseSlider->setBounds(85, getHeight()-85, 10, 60);
+    releaseSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
+    releaseSlider->setBounds(315, getHeight()-77, 30, 55);
     releaseSlider->addListener(this);
     releaseSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (releaseSlider.get());
     
-    glideSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
-    glideSlider->setBounds(475, getHeight()-85, 10, 60);
+    glideSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
+    glideSlider->setBounds(455, getHeight()-77, 40, 55);
     glideSlider->addListener(this);
     glideSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (glideSlider.get());
+    
+    widthSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
+    widthSlider->setBounds(35, getHeight()-77, 40, 55);
+    widthSlider->addListener(this);
+    widthSlider->setLookAndFeel(&mixFeel);
+    addAndMakeVisible (widthSlider.get());
     /*==================================================================================================*/
     /*========================================== FUNDAMENTAL ===========================================*/
     fundMultiSlider = std::make_unique<Slider>(Slider::SliderStyle::ThreeValueVertical, Slider::NoTextBox);
@@ -81,6 +87,8 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     fundSlider->addListener(this);
     fundSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (fundSlider.get());
+    
+    
     
     fundRandSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
     fundRandSlider->setBounds(80, 80, 10, 160);
@@ -194,19 +202,19 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     /*==================================================================================================*/
     /*============================================= INTER ==============================================*/
     interSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
-    interSlider->setBounds(490, 80, 10, 160);
+    interSlider->setBounds(496, 80, 10, 160);
     interSlider->addListener(this);
     interSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (interSlider.get());
     
     triggerOnSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
-    triggerOnSlider->setBounds(450, 80, 20, 160);
+    triggerOnSlider->setBounds(447, 80, 22, 160);
     triggerOnSlider->addListener(this);
     triggerOnSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (triggerOnSlider.get());
     
     triggerOffSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearBarVertical, Slider::TextBoxBelow);
-    triggerOffSlider->setBounds(470, 80, 20, 160);
+    triggerOffSlider->setBounds(470, 80, 22, 160);
     triggerOffSlider->addListener(this);
     triggerOffSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (triggerOffSlider.get());
@@ -241,25 +249,25 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     /*==================================================================================================*/
     /*============================================= PAN ================================================*/
     panMultiSlider = std::make_unique<Slider>(Slider::SliderStyle::ThreeValueHorizontal, Slider::NoTextBox);
-    panMultiSlider->setBounds(115, 275, 300, 20);
+    panMultiSlider->setBounds(125, 275, 290, 20);
     panMultiSlider->addListener(this);
     panMultiSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (panMultiSlider.get());
     
     panSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearHorizontal, Slider::NoTextBox);
-    panSlider->setBounds(115, 275, 300, 20);
+    panSlider->setBounds(125, 275, 290, 20);
     panSlider->addListener(this);
     panSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (panSlider.get());
     
     panSpreadSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearVertical, Slider::NoTextBox);
-    panSpreadSlider->setBounds(100, 265, 10, 40);
+    panSpreadSlider->setBounds(110, 275, 10, 40);
     panSpreadSlider->addListener(this);
     panSpreadSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (panSpreadSlider.get());
 
     panRandSlider = std::make_unique<Slider>(Slider::SliderStyle::LinearHorizontal, Slider::NoTextBox);
-    panRandSlider->setBounds(115, 300, 300, 10);
+    panRandSlider->setBounds(125, 305, 290, 10);
     panRandSlider->addListener(this);
     panRandSlider->setLookAndFeel(&mixFeel);
     addAndMakeVisible (panRandSlider.get());
@@ -288,6 +296,50 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     panLabel->attachToComponent (panSlider.get(), false);
     panLabel->setJustificationType (Justification::centred);
     panLabel->setLookAndFeel(&mixFeel);
+    
+    widthLabel = std::make_unique<Label>("", "Width");
+    addAndMakeVisible (widthLabel.get());
+    widthLabel->attachToComponent (widthSlider.get(), false);
+    widthLabel->setJustificationType (Justification::centred);
+    widthLabel->setLookAndFeel(&mixFeel);
+    
+    glideLabel = std::make_unique<Label>("", "Glide");
+    addAndMakeVisible (glideLabel.get());
+    glideLabel->attachToComponent (glideSlider.get(), false);
+    glideLabel->setJustificationType (Justification::centred);
+    glideLabel->setLookAndFeel(&mixFeel);
+    
+    attackLabel = std::make_unique<Label>("", "A");
+    addAndMakeVisible (attackLabel.get());
+    attackLabel->attachToComponent(attackSlider.get(), false);
+    attackLabel->setJustificationType (Justification::centred);
+    attackLabel->setLookAndFeel(&mixFeel);
+
+    decayLabel = std::make_unique<Label>("", "D");
+    decayLabel->attachToComponent(decaySlider.get(), false);
+    decayLabel->setJustificationType (Justification::centred);
+    decayLabel->setLookAndFeel(&mixFeel);
+
+    sustainLabel = std::make_unique<Label>("", "S");
+    sustainLabel->attachToComponent(sustainSlider.get(), false);
+    sustainLabel->setJustificationType (Justification::centred);
+    sustainLabel->setLookAndFeel(&mixFeel);
+
+    releaseLabel = std::make_unique<Label>("", "R");
+    releaseLabel->attachToComponent(releaseSlider.get(), false);
+    releaseLabel->setJustificationType (Justification::centred);
+    releaseLabel->setLookAndFeel(&mixFeel);
+    
+    onLabel = std::make_unique<Label>("", "On");
+    onLabel->attachToComponent(triggerOnSlider.get(), false);
+    onLabel->setJustificationType (Justification::centred);
+    onLabel->setLookAndFeel(&mixFeel);
+    
+    offLabel = std::make_unique<Label>("", "Off");
+    offLabel->attachToComponent(triggerOffSlider.get(), false);
+    offLabel->setJustificationType (Justification::centred);
+    offLabel->setLookAndFeel(&mixFeel);
+    
     
     
 
@@ -339,6 +391,8 @@ PulsarAudioProcessorEditor::PulsarAudioProcessorEditor (PulsarAudioProcessor& p)
     panSpreadSlider->setValue(0);
     ampSlider->setValue(50);
     waveSlider->setValue(50);
+    
+    
 
 }
 
@@ -354,7 +408,7 @@ void PulsarAudioProcessorEditor::paint (juce::Graphics& g)
     
     
     g.setColour(juce::Colours::yellow);
-    juce::Rectangle<int> frame(15, 50, getWidth() - 30, getHeight() - 65);  // 25px from sides, 30 from top, 5 below nameLabel, 5 above bottom
+    //juce::Rectangle<int> frame(15, 50, getWidth() - 30, getHeight() - 65);  // 25px from sides, 30 from top, 5 below nameLabel, 5 above bottom
     g.drawRoundedRectangle(frame.toFloat(), 5.f, 2.f);
     
     g.setColour(juce::Colours::grey);
@@ -492,7 +546,7 @@ void PulsarAudioProcessorEditor::sliderValueChanged(Slider* s)
     {
         double spread = ampSpreadSlider->getValue();
         double selection = ampSlider->getValue();
-        float val = NormalisableRange<float>(0, 100, 0.1, 1).convertTo0to1(selection);
+        //float val = NormalisableRange<float>(0, 100, 0.1, 1).convertTo0to1(selection);
 
         
         ampMultiSlider->setNormalisableRange(juce::NormalisableRange<double>(0, 100, 0.1, 1));
@@ -547,28 +601,36 @@ void PulsarAudioProcessorEditor::sliderValueChanged(Slider* s)
 
 }
 
-void PulsarAudioProcessorEditor::comboBoxChanged(ComboBox* box)
-{
-
-}
-
-
-
 void PulsarAudioProcessorEditor::repaintPulsaret()
 {
+    if(audioProcessor.isTrainRunning())
+    {
+        if(audioProcessor.isFlashing())
+        {
+            pulsaretVisualizer.setNewWaveColour(juce::Colours::purple);
+           
+            pulsaretVisualizer.setAmp(audioProcessor.getFlashCoef());
+            pulsaretVisualizer.repaint();
+        }
+        else
+        {
+            pulsaretVisualizer.setNewWaveColour(juce::Colours::black);
+            pulsaretVisualizer.setAmp(audioProcessor.getFlashCoef());
+            pulsaretVisualizer.repaint();
+        }
+    }
+    else
+    {
+        pulsaretVisualizer.setNewWaveColour(juce::Colours::black);
+        pulsaretVisualizer.repaint();
+    }
     
 }
+
 void PulsarAudioProcessorEditor::timerCallback()
 {
-    if(triggerButton->isDown())
-    {
 
+    repaintPulsaret();
 
-    }
-    else if (!triggerButton->isDown())
-    {
-
-    }
-    
 }
 

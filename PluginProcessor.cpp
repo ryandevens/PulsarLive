@@ -24,6 +24,9 @@ PulsarAudioProcessor::PulsarAudioProcessor()
 {
     //
     e.state.addListener (this);
+    fillImpulseBuffer();
+    
+
 }
 
 PulsarAudioProcessor::~PulsarAudioProcessor()
@@ -99,6 +102,17 @@ void PulsarAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
 {
     pulsarTrain.prepare(sampleRate);
     update();
+    
+    const auto numChannels = getTotalNumOutputChannels();
+    
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = uint32(numChannels);
+    
+    convolver.prepare(spec);
+    
+    convolver.loadImpulseResponse(std::move(impulseBuffer), sampleRate, juce::dsp::Convolution::Stereo::no, juce::dsp::Convolution::Trim::no, juce::dsp::Convolution::Normalise::no);
 }
 
 void PulsarAudioProcessor::releaseResources()
@@ -144,31 +158,48 @@ void PulsarAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
         update();
     }
     
+
     
     
     for (auto it = midiMessages.findNextSamplePosition (0); it != midiMessages.cend(); ++it)
     {
         const auto metadata = *it;
-        
+
         if (metadata.samplePosition >= buffer.getNumSamples())
             break;
-        
+
         auto message = metadata.getMessage();
-        
+
         if (message.isNoteOn() || message.isSustainPedalOn())
         {
-            
             pulsarTrain.triggerEnv();
-            
         }
         if (message.isNoteOff() || message.isSustainPedalOff())
         {
             pulsarTrain.triggerRelease();
         }
-        
+
     }
     
     pulsarTrain.generateNextBlock(buffer);
+    
+    auto block = juce::dsp::AudioBlock<float> (buffer);
+    auto context = juce::dsp::ProcessContextReplacing<float> (block);
+    convolver.process (context);
+    
+//    auto buffWrite = buffer.getArrayOfWritePointers();
+//    
+//    for (int i = 0; i <= buffer.getNumSamples(); i++)
+//    {
+//        if(!pulsarTrain.checkIfInPulsaret())
+//        {
+//            for (int j = 0; j < getTotalNumOutputChannels(); j++)
+//            {
+//                buffWrite[j][i] = 0.f;
+//            }
+//        }
+//    }
+
 }
 
 
@@ -277,7 +308,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> parameters;
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Fundamental Freq", "Fundamental Freq",
-                                                                NormalisableRange<float> (1.f, 500.f, 0.01f, 0.5f), 50.f));
+                                                                NormalisableRange<float> (1.f, 20.f, 1.f, 1.f), 5.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Fundamental Spread", "Fundamental Spread",
                                                                 NormalisableRange<float> (1.f, 12.f, 0.001f, 0.5f), 1.f));
@@ -288,7 +319,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Formant Freq", "Formant Freq",
-                                                                NormalisableRange<float> (100.f, 10000.f, 0.01f, 0.3f), 100.f));
+                                                                NormalisableRange<float> (100.f, 10000.f, 1.f, 0.3f), 400.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Formant Spread", "Formant Spread",
                                                                 NormalisableRange<float> (1.f, 15.f, 0.001f, 1.f), 1.f));
@@ -299,7 +330,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Formant Freq2", "Formant Freq2",
-                                                                NormalisableRange<float> (100.f, 10000.f, 0.01f, 0.3f), 200.f));
+                                                                NormalisableRange<float> (100.f, 10000.f, 1.f, 0.3f), 800.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Formant Spread2", "Formant Spread2",
                                                                 NormalisableRange<float> (1.f, 15.f, 0.001f, 1.f), 1.f));
@@ -321,10 +352,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Wave Type", "Wave Type",
-                                                                NormalisableRange<float> (0.f, 100.f, 0.001f, 1.f), 0.f));
+                                                                NormalisableRange<float> (0.f, 100.f, 1.f, 1.f), 0.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Wave Spread", "Wave Spread",
-                                                                NormalisableRange<float> (0.f, 100.f, 0.1f, 1.f), 0.f));
+                                                                NormalisableRange<float> (0.f, 100.f, 0.1f, 1.f), 1.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Wave Random", "Wave Random",
                                                                 NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.f));
@@ -335,7 +366,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
                                                                 NormalisableRange<float> (0.0f, 100.f, 0.1f, 1.f), 50.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Amp Spread", "Amp Spread",
-                                                                NormalisableRange<float> (0.f, 100.f, 0.1f, 1.f), 0.f));
+                                                                NormalisableRange<float> (0.f, 100.f, 0.1f, 1.f), 1.f));
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Amp Random", "Amp Random",
                                                                 NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.00f));
@@ -349,21 +380,21 @@ juce::AudioProcessorValueTreeState::ParameterLayout PulsarAudioProcessor::create
     
     parameters.push_back (std::make_unique<AudioParameterBool>("Trigger", "Trigger", false));
     
-    parameters.push_back (std::make_unique<AudioParameterFloat>("Glide Time", "Glide Time", NormalisableRange<float> (0.f, 10000.f, 0.1f, 1.f), 100.f)); // in ms, converted later to sec
+    parameters.push_back (std::make_unique<AudioParameterFloat>("Glide Time", "Glide Time", NormalisableRange<float> (0.f, 10000.f, 1.f, 1.f), 100.f)); // in ms, converted later to sec
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Width", "Width",
-                                                                NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.f));
+                                                                NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.5f));
     
     
     parameters.push_back (std::make_unique<AudioParameterFloat>("Attack", "Attack",
-                                                                NormalisableRange<float> (0.f, 10000.f, 0.001f, 0.5f), 100.f));
+                                                                NormalisableRange<float> (0.f, 10000.f, 1.f, 0.5f), 100.f));
     parameters.push_back (std::make_unique<AudioParameterFloat>("Decay", "Decay",
-                                                                NormalisableRange<float> (0.f, 5000.f, 0.001f, 0.5f), 50.f));
+                                                                NormalisableRange<float> (0.f, 5000.f, 1.f, 0.5f), 50.f));
     parameters.push_back (std::make_unique<AudioParameterFloat>("Sustain Level", "Sustain Level",
-                                                                NormalisableRange<float> (0.f, 1.f, 0.001f, 1.f), 0.5f));
+                                                                NormalisableRange<float> (0.f, 1.f, 0.01f, 1.f), 0.5f));
     parameters.push_back (std::make_unique<AudioParameterFloat>("Release", "Release",
-                                                                NormalisableRange<float> (0.f, 10000.f, 0.001f, 0.5f), 200.f));
+                                                                NormalisableRange<float> (0.f, 10000.f, 1.f, 0.5f), 500.f));
     
     
     return { parameters.begin(), parameters.end() };
@@ -377,5 +408,26 @@ void PulsarAudioProcessor::triggerPulsarTrain()
 void PulsarAudioProcessor::releasePulsarTrain()
 {
     pulsarTrain.triggerRelease();
+}
+
+PulsaretTable& PulsarAudioProcessor::getPulsaretTable()
+{
+    return pulsarTrain.getPulsaretTable();
+}
+
+bool PulsarAudioProcessor::isFlashing()
+{
+    return pulsarTrain.getFlashState();
+}
+
+bool PulsarAudioProcessor::isTrainRunning()
+{
+    return pulsarTrain.isRunning();
+}
+
+float PulsarAudioProcessor::getFlashCoef()
+{
+    
+    return pulsarTrain.getFlashCoef();
 }
 

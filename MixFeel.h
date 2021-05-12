@@ -36,7 +36,7 @@ public:
 private:
     Font getFont()
     {
-        return Font ("Consolas", "Regular", 11.f);
+        return Font ("Consolas", "Regular", 10.f);
     }
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MixFeel)

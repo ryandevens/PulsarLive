@@ -37,13 +37,15 @@ void MixFeel::drawLinearSlider (Graphics& g, int x, int y, int width, int height
     
     if(slider.getSliderStyle() == Slider::SliderStyle::LinearBarVertical)
     {
+        
         juce::Rectangle<float> bgFrame(x, y, width, height);
-        g.setColour(juce::Colours::white);
+        g.setColour(juce::Colours::whitesmoke);
         g.drawRoundedRectangle(bgFrame, 1.f, 2.f);
 
         g.setColour(juce::Colours::transparentBlack.withAlpha(0.f));
         g.fillAll();
 
+       
         juce::Rectangle<float> centerRect(x, sliderPos, width, 2);
         g.setColour(juce::Colours::orange);
         g.fillRoundedRectangle(centerRect, 1.f);
@@ -56,25 +58,24 @@ void MixFeel::drawLinearSlider (Graphics& g, int x, int y, int width, int height
         bgRect.setX(x);
         bgRect.setY(y);
         bgRect.setSize(width, height);
-        g.setColour(juce::Colours::white.withAlpha(0.5f));
+        g.setColour(juce::Colours::whitesmoke);
         g.drawRoundedRectangle(bgRect.toFloat(), 1.f, 1.f);
         
-        juce::Rectangle<int> bottomTick(x, height, width, 2);
+        
         juce::Rectangle<int> centerTick(x, height/2, width, 2);
-        juce::Rectangle<int> topTick(x, 0, width, 2);
+        
         
         auto pos = sliderPos;
         if (pos >= height - 3)
             pos = height - 3;
         
-        juce::Rectangle<int> thumb(0, pos, width, 3);
+        juce::Rectangle<int> thumb(0, pos, width, 2);
         g.setColour(juce::Colours::yellow);
         g.fillRoundedRectangle(thumb.toFloat(), 5.f);
         
-        g.setColour(juce::Colours::antiquewhite);
-        g.fillRoundedRectangle(bottomTick.toFloat(), 5.f);
-        g.fillRoundedRectangle(centerTick.toFloat(), 5.f);
-        g.fillRoundedRectangle(topTick.toFloat(), 5.f);
+        
+        g.setColour(juce::Colours::whitesmoke.darker());
+        g.fillRoundedRectangle(centerTick.toFloat(), 3.f);
     }
 
     
@@ -84,12 +85,10 @@ void MixFeel::drawLinearSlider (Graphics& g, int x, int y, int width, int height
         bgRect.setX(x);
         bgRect.setY(y);
         bgRect.setSize(width, height);
-        g.setColour(juce::Colours::white.withAlpha(0.5f));
+        g.setColour(juce::Colours::whitesmoke);
         g.drawRoundedRectangle(bgRect.toFloat(), 1.f, 1.f);
 
-        juce::Rectangle<int> leftTick(x, y, 2, height);
-        juce::Rectangle<int> centerTick(width/2, y, 2, height);
-        juce::Rectangle<int> rightTick(width-3, y, 2, height);
+        juce::Rectangle<int> centerTick(width/2, y, 1, height);
         
         g.setColour(juce::Colours::transparentBlack.withAlpha(0.f));
         g.fillAll();
@@ -98,13 +97,12 @@ void MixFeel::drawLinearSlider (Graphics& g, int x, int y, int width, int height
         if (pos >= width - 3)
             pos = width - 3;
         
-        juce::Rectangle<int> thumb(pos, 0, 5, 20);
+        juce::Rectangle<int> thumb(pos, 0, 2, 20);
         g.setColour(juce::Colours::yellow);
-        g.fillRoundedRectangle(thumb.toFloat(), 5.f);
-        g.setColour(juce::Colours::antiquewhite);
-        g.fillRoundedRectangle(leftTick.toFloat(), 5.f);
-        g.fillRoundedRectangle(rightTick.toFloat(), 5.f);
-        g.fillRoundedRectangle(centerTick.toFloat(), 5.f);
+        g.fillRoundedRectangle(thumb.toFloat(), 2.f);
+        
+        g.setColour(juce::Colours::whitesmoke.darker());
+        g.fillRoundedRectangle(centerTick.toFloat(), 2.f);
     }
     
     if(slider.getSliderStyle() == Slider::ThreeValueVertical)
@@ -122,7 +120,7 @@ void MixFeel::drawLinearSlider (Graphics& g, int x, int y, int width, int height
     if(slider.getSliderStyle() == Slider::ThreeValueHorizontal)
     {
         juce::Rectangle<float> bgFrame(x, y, width, height);
-        g.setColour(juce::Colours::white);
+        g.setColour(juce::Colours::whitesmoke);
         g.drawRoundedRectangle(bgFrame, 1.f, 2.f);
         
         juce::Rectangle<float> fillRect(minSliderPos + 2, y, maxSliderPos-minSliderPos, height);
@@ -151,12 +149,13 @@ juce::Slider::SliderLayout MixFeel::getSliderLayout(Slider& slider)
 
 Label* MixFeel::createSliderTextBox(Slider& slider)
 {
-   Label* l = LookAndFeel_V4::createSliderTextBox(slider);
+    
+    Label* l = LookAndFeel_V4::createSliderTextBox(slider);
     // make sure editor text is black (so it shows on white background)
     l->setColour(juce::Label::outlineColourId, juce::Colours::white.withAlpha(0.0f));
     l->setColour(juce::Slider::textBoxBackgroundColourId, Colours::hotpink.withAlpha(0.f));
     l->setColour(juce::Label::textColourId, Colours::white);
-    
+
     
     return l;
 }

@@ -12,7 +12,7 @@
 
 #include <JuceHeader.h>
 #include "PulsaretTable.h"
-#include "PluginProcessor.h"
+
 
 //==============================================================================
 /*
@@ -20,13 +20,15 @@
 class PulsaretVisualizer : public juce::Component //, juce::Timer
 {
 public:
-    PulsaretVisualizer(PulsarAudioProcessor& p);
+    PulsaretVisualizer(PulsaretTable& t);
     
     ~PulsaretVisualizer() override;
 
     void paint (juce::Graphics& g) override;
     void resized() override;
     void setValue();
+    
+    void setTable(PulsaretTable& table);
     
 //    void timerCallback() override
 //    {
@@ -38,43 +40,13 @@ public:
     {
         waveColour = newColour;
     }
-    void setNewBackgroundColour(juce::Colour newColour)
-    {
-        bgColour = newColour;
-    }
-    void setWaveSat(float sat)
-    {
-        waveSat = sat;
-    }
-    void setBgSat(float sat)
-    {
-        bgSat = sat;
-    }
-    
-    void setWaveHue(float h)
-    {
-        waveHue = h;
-    }
-    void setBgHue(float h)
-    {
-        bgHue = h;
-    }
-    
-    
-    void setWaveVal(float v)
-    {
-        waveVal = v;
-    }
-    void setBgVal(float v)
-    {
-        bgVal = v;
-    }
     
     void setAmp(float a)
     {
-        amp = a;
-        amp = 1;
+        amp = std::abs(a);
     }
+    
+    
 private:
     PulsaretTable& pulsaretTable;
     bool isDrawing = false;
@@ -98,9 +70,7 @@ private:
     float bgHue;
     float bgVal;
     float amp = 1.f;
-  
-    PulsarAudioProcessor& audioProcessor;
-    
+
     
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PulsaretVisualizer)

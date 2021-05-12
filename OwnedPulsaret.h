@@ -37,14 +37,14 @@ public:
     
     float getNextSample() noexcept;
     
-    juce::AudioBuffer<float>& getBuffer();
+    juce::AudioBuffer<float> getBuffer();
     
     void resetPhase() override;
 
     void setLengthInSamples(float numSamples, float pulsarPeriod);
     void isSingleCycle(bool is);
     void setContinuous(bool test);
-    void setAsHit();
+    void setAsHit(); 
     void setAsMiss();
     
     void setWaveType(float wave)
@@ -57,7 +57,6 @@ public:
     
     PulsaretTable pulsaretTable;
 private:
-    
     float pRatio = 2.f; // playback or pitchRatio.  Changing coefficient between 0.5 and 2.0 that will multiply freq or delta
     float freq;
     bool trigger = true;
