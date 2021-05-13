@@ -51,7 +51,7 @@ private:
     PulsaretTable& pulsaretTable;
     bool isDrawing = false;
     
-    std::unique_ptr<Label> valueLabel;
+    std::unique_ptr<juce::Label> valueLabel;
     juce::String value = "value";
     
     juce::Point<float> mousePosition;
@@ -67,7 +67,7 @@ private:
     float waveHue;
     float waveVal;
     float bgSat;
-    float bgHue;
+    float bgHue = 0.5f;
     float bgVal;
     float amp = 1.f;
 

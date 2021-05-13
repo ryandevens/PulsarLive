@@ -201,4 +201,7 @@ void OwnedPulsaret::setAsMiss()
     trigger = false;
 }
 
-
+PulsaretTable& OwnedPulsaret::getPulsaretTable()
+{
+    return pulsaretTable;
+}

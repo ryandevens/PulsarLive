@@ -23,7 +23,6 @@ PulsaretVisualizer::~PulsaretVisualizer()
 
 void PulsaretVisualizer::paint (juce::Graphics& g)
 {
-    
     auto w = getLocalBounds().getWidth();
     auto h = getLocalBounds().getHeight();
     auto frameHalf = h / 2;
@@ -31,8 +30,6 @@ void PulsaretVisualizer::paint (juce::Graphics& g)
     
     juce::Rectangle<int> waveFrame = {0,0, w, h};
 
-    
-   
     g.fillRoundedRectangle(waveFrame.toFloat(), 5.f);
     
     auto hue = 1.f - amp;

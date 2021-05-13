@@ -23,8 +23,7 @@ PulsarAudioProcessor::PulsarAudioProcessor()
 #endif
 {
     //
-    e.state.addListener (this);
-    fillImpulseBuffer();
+    e.state.addListener(this);
     
 
 }
@@ -102,18 +101,7 @@ void PulsarAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock
 {
     pulsarTrain.prepare(sampleRate);
     update();
-    
-    const auto numChannels = getTotalNumOutputChannels();
-    
-    juce::dsp::ProcessSpec spec;
-    spec.sampleRate = sampleRate;
-    spec.maximumBlockSize = samplesPerBlock;
-    spec.numChannels = uint32(numChannels);
-    
-    convolver.prepare(spec);
-    
-    convolver.loadImpulseResponse(std::move(impulseBuffer), sampleRate, juce::dsp::Convolution::Stereo::no, juce::dsp::Convolution::Trim::no, juce::dsp::Convolution::Normalise::no);
-}
+ }
 
 void PulsarAudioProcessor::releaseResources()
 {
@@ -183,22 +171,6 @@ void PulsarAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     
     pulsarTrain.generateNextBlock(buffer);
     
-    auto block = juce::dsp::AudioBlock<float> (buffer);
-    auto context = juce::dsp::ProcessContextReplacing<float> (block);
-    convolver.process (context);
-    
-//    auto buffWrite = buffer.getArrayOfWritePointers();
-//    
-//    for (int i = 0; i <= buffer.getNumSamples(); i++)
-//    {
-//        if(!pulsarTrain.checkIfInPulsaret())
-//        {
-//            for (int j = 0; j < getTotalNumOutputChannels(); j++)
-//            {
-//                buffWrite[j][i] = 0.f;
-//            }
-//        }
-//    }
 
 }
 
@@ -417,12 +389,12 @@ PulsaretTable& PulsarAudioProcessor::getPulsaretTable()
 
 bool PulsarAudioProcessor::isFlashing()
 {
-    return pulsarTrain.getFlashState();
+    return pulsarTrain.checkIfFlashing();
 }
 
 bool PulsarAudioProcessor::isTrainRunning()
 {
-    return pulsarTrain.isRunning();
+    return pulsarTrain.trainIsRunning();
 }
 
 float PulsarAudioProcessor::getFlashCoef()

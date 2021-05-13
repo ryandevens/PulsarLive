@@ -75,69 +75,13 @@ public:
     bool isTrainRunning();
     bool isFlashing(); // checks if train should flash for a "hit" or not flash for a "miss" using trigger patterns / stochasticism
     float getFlashCoef(); // scale flash by amp 
-    
-//    void fillImpulseBuffer()
-//    {
-//        impulseBuffer.setSize (1, 128);
-//        impulseBuffer.clear();
-//
-//        auto* buffWrite = impulseBuffer.getWritePointer (0);
-//
-//        auto angleDelta = juce::MathConstants<double>::twoPi / (double) (128);
-//        auto pi = juce::MathConstants<double>::pi;
-//        double currentAngle = -pi;
-//
-//        for (unsigned int i = 0; i < 128; ++i)
-//        {
-//            float sample;
-//
-//            if (currentAngle == 0)
-//            {
-//                sample = 1;
-//            }
-//            else
-//            {
-//                sample = std::sin (pi * currentAngle) / (pi * currentAngle);
-//                buffWrite[i] += sample;
-//
-//            }
-//
-//            currentAngle += angleDelta;
-//        }
-//
-//        buffWrite[128] = buffWrite[0];
-//    }
-    void fillImpulseBuffer()
-    {
-        impulseBuffer.setSize (1, 128);
-        impulseBuffer.clear();
-        auto* buffWrite = impulseBuffer.getWritePointer (0);
-        int harmonics = 32;
-        for (auto i = 0; i < harmonics; i++)
-        {
-            float harmonic = i + 1;
-            auto angleDelta = juce::MathConstants<double>::twoPi / (double) (128) * harmonic;
-            auto currentAngle = 0.0;
-            float harmonicAmp = 0.9f / (harmonic * harmonic);
-            for (unsigned int i = 0; i < 128; ++i)
-            {
-                auto sample = std::sin (currentAngle);
-                buffWrite[i] += (float) sample * harmonicAmp; //harmonicWeights[harmonic];
-                currentAngle += angleDelta;
-            }
-        }
-        buffWrite[128] = buffWrite[0];
-    }
+
  
 private:
     PulsarTrain pulsarTrain;
     bool trainRunning = false;
     bool mustUpdateProcessing { false };
-    
-    juce::dsp::Convolution              convolver;
-    juce::AudioBuffer<float>            impulseBuffer; // triangle for now 4/6
-//    juce::dsp::Convolution::Latency     latency;
-    
+
 
     
     //==============================================================================

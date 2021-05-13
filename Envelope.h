@@ -102,7 +102,7 @@ private:
 
 
     
-    Atomic<double> sliderVal = {0.5f};
+    std::atomic<double> sliderVal = {0.5};
     Atomic<float> envVal = {0.5f};
     //Atomic<float> envScale = {0.5f};
     

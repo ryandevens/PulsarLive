@@ -11,15 +11,8 @@
 #include "PulsarTrain.h"
 
 PulsarTrain::PulsarTrain()
-
 {
     setTrigger(3, 2);
-    env.setMode(pedal::CurvedEnvelope::Mode::ADSR);
-    env.setAttackTime(1000.f);
-    env.setDecayTime(100.f);
-    env.setSustainLevel(0.4f);
-    env.setReleaseTime(2000.f);
-    
 }
 
 PulsarTrain::~PulsarTrain()
@@ -36,6 +29,8 @@ void PulsarTrain::prepare(double sampleRate)
     smoothFund.reset(mSampleRate, glideTime.get());
     smoothForm.reset(mSampleRate, glideTime.get());
     smoothForm2.reset(mSampleRate, glideTime.get());
+
+    env.setSampleRate(sampleRate);
     
     fundRange.setStart(1);
     fundRange.setEnd(500);
@@ -63,31 +58,6 @@ void PulsarTrain::setFrequencies(float fundFreq, float form1, float form2)
     smoothFund.setTargetValue(fundFreq);
     smoothForm.setTargetValue(form1);
     smoothForm2.setTargetValue(form2);
-}
-
-void PulsarTrain::setHarmonicFormants(float fund, float form1, float form2)
-{
-    if(fund <= form1)
-    {
-        int ratio1 = jlimit(1.f, 12.f, form1 / fund);
-        smoothForm.setTargetValue(fund * ratio1);
-    }
-    else
-    {
-        int ratio1 = jlimit(1.f, 12.f, fund / form1);
-        smoothForm.setTargetValue(fund / ratio1);
-    }
-    
-    if(fund <= form2)
-    {
-        int ratio2 = jlimit(1.f, 12.f, form2 / fund);
-        smoothForm2.setTargetValue(fund * ratio2);
-    }
-    else
-    {
-        int ratio2 = jlimit(1.f, 12.f, fund / form2);
-        smoothForm2.setTargetValue(fund / ratio2);
-    }
 }
 
 //========================================================================*/
@@ -207,11 +177,8 @@ void PulsarTrain::triggerPulsaret()
         {
             pulsaret2.pulsaretTable.setTable(waveType.get() / 100.f);
         }
-        
-        // have to pass the period to avoid overlap
         pulsaret2.setFrequency(freq);
         pulsaret2.setRunning();
-        
     }
     
 }
@@ -238,11 +205,9 @@ void PulsarTrain::setPulsaretWidth(float width)
         float dutyCycle = getPeriod() * width;
         pulsaretSamples1 = dutyCycle;
     
-    
         float dutyCycle2 = getPeriod() * width;
         pulsaretSamples2 = dutyCycle2;
 
-    
     if(width < 0.02)
     {
 
@@ -253,10 +218,6 @@ void PulsarTrain::setPulsaretWidth(float width)
 
     }
 }
-
-
-
-
 
 void PulsarTrain::generateNextBlock(juce::AudioBuffer<float>& buffer)
 {
@@ -275,7 +236,6 @@ void PulsarTrain::generateNextBlock(juce::AudioBuffer<float>& buffer)
             samplesRemainingInPeriod = getPeriod();
         }
         
-        
         float sample = 0.f;
         
         if (!pulsaret1.isFree) // if the pulsaret is still running i.e. NOT free (affected by width)
@@ -286,18 +246,15 @@ void PulsarTrain::generateNextBlock(juce::AudioBuffer<float>& buffer)
         {
             sample += pulsaret2.getNextSample();
         }
-        
-        
-        /*
-            Doing this because rand object can only generate within a range if it is in integer
-            Putting all my ' / 100 ' normalization RIGHT HERE AND NOWHERE ELSE!!!
-        */
+
         auto pLeft = panL.get() / 100.f;
         auto pRight = panR.get() / 100.f;
         auto amp = mAmp.get() / 100.f;
 
-        auto envGain = env.generateSample();
-        
+        auto envGain = env.getNextSample();
+        if (envGain < 0.01f)
+            isRunning = false;
+        flashCoef = envGain;
         
         if (buffer.getNumChannels() == 1)
         {
@@ -308,16 +265,9 @@ void PulsarTrain::generateNextBlock(juce::AudioBuffer<float>& buffer)
             buffWrite[0][i] = sample * amp * pLeft * envGain ;
             buffWrite[1][i] = sample * amp * pRight * envGain;
         }
-        
         samplesRemainingInPeriod--;
-        
-        if(isFlashing.get())
-            flashState = (float)samplesRemainingInPeriod / (float)getPeriod();
-        else
-            flashState = 0.f;
     }
 }
-
 /*=====================================================================================*/
 /*========================== setPulsaretParamsAndTrigger() ============================*/
 /*-------------------------------------------------------------------------------------*/
@@ -352,8 +302,7 @@ void PulsarTrain::setPulsaretParamsAndTrigger()
                         panL = 100.f - panR.get();
                     }
                 }
-                
-                
+
                 onCount--;
                 
                 triggerPulsaret();
@@ -366,15 +315,11 @@ void PulsarTrain::setPulsaretParamsAndTrigger()
         // start counting down the "off" counts once we have counted all the onCounts
         if(onCount <= 0)
         {
-
             if(offCount >= 0)
             {
-                
                 //triggerPulsaretWithNoAmp();
                 isFlashing = false;
-                
                 offCount--;
-  
             }
             
         }
@@ -385,6 +330,7 @@ void PulsarTrain::setPulsaretParamsAndTrigger()
             offCount = triggerOff;
         }
     }
+
     if (!isTriggerPattern) // we are NOT in a triggerPattern but still might need randomized values
     {
         
@@ -400,7 +346,6 @@ void PulsarTrain::setPulsaretParamsAndTrigger()
                     mAmp = amp;
                 }
             }
-            
             if(panIsSpread.get())
             {
                 juce::Random rand2;
@@ -410,10 +355,9 @@ void PulsarTrain::setPulsaretParamsAndTrigger()
                     panL = 100.f - panR.get();
                 }
             }
-            
             isFlashing = true;
             triggerPulsaret();
-            flipFlashState(); // every other
+            //flipFlashState(); // every other
         }
         else
         {
@@ -425,38 +369,14 @@ void PulsarTrain::setPulsaretParamsAndTrigger()
 
 void PulsarTrain::checkStatus()
 {
-//    for (int i = 0; i < pulsaretArray.size(); ++i)
-//    {
-//        if (!pulsaret1.isFree) //
-//        {
-//            needsCalculation = true;
-//        }
-//    }
+
 }
 
-float PulsarTrain::getFlashState()
-{
-    return flashState.get();
-}
-
-void PulsarTrain::flipFlashState()
-{
-    if(flashState.get())
-    {
-        flashState = false;
-    }
-    else
-    {
-        flashState = true;
-    }
-}
 
 void PulsarTrain::setTrigger(int on, int off)
 {
-    
     if(off == 0)
     {
-        
         isTriggerPattern = false;
     }
     if(off > 0)
@@ -479,10 +399,6 @@ void PulsarTrain::setGlideTime(float glideTime)
     smoothForm2.reset(mSampleRate, seconds);
 }
 
-bool PulsarTrain::getHarmonicModeStatus()
-{
-    return inHarmonicMode;
-}
 
 float PulsarTrain::getFormFreq1()
 {
@@ -498,23 +414,22 @@ void PulsarTrain::triggerEnv()
 {
     setEnv();
     setGlideTime(glideTime.get());
-    env.setTrigger(true);
+    env.noteOn();
 }
 
 void PulsarTrain::triggerRelease()
 {
-    env.setTrigger(false);
+    env.noteOff();
 }
 
 void PulsarTrain::setEnv()
 {
-    env.setAttackTime(attack);
-    env.setDecayTime(decay);
-    env.setSustainLevel(sustain);
-    env.setReleaseTime(release);
+    envParam.attack = attack / 1000.f;
+    envParam.decay = decay / 1000.f;
+    envParam.sustain = sustain;
+    envParam.release = release / 1000.f;
+    env.setParameters(envParam);
 }
-
-
 
 void PulsarTrain::updateParams(float f, float fSpread, float fRand,
                                 float fo, float foSpread, float foRand,
@@ -524,26 +439,15 @@ void PulsarTrain::updateParams(float f, float fSpread, float fRand,
                                float inter, float atk, float dec, float sus, float rel, float width,
                                float gTime, int trigOn, int trigOff, bool trig, float w, float wSpread, float wRand)
 {
-
-//    if (foRand >= 0.99f)
-//        inHarmonicMode = true;
-//    if(foRand < 0.99f)
-//        inHarmonicMode = false;
-    
     setFrequencies(f, fo, fo2);
-    //mFundFreq = f;
     mFundSpread = fSpread;
     mFundRand = fRand;
-    
-    //mFormFreq = fo;
+
     mFormSpread = foSpread;
     mFormRand = foRand;
     
-
-    //mFormFreq2 = fo2;
     mFormSpread2 = foSpread2;
     mFormRand2 = foRand2;
-
     
     panR = p;
     panL = 100.f - p;
@@ -568,15 +472,9 @@ void PulsarTrain::updateParams(float f, float fSpread, float fRand,
     waveSpread = wSpread;
     waveRand = wRand;
     
-    
     setTrigger(trigOn, trigOff); // poor name, for a trigger pattern will change
-    
-
     calculateRanges();
-    
-
     setPulsaretWidth(width);
-
 }
 
 
@@ -596,8 +494,6 @@ void PulsarTrain::calculateRanges()
         fundIsSpread = false;
     }
     
-    
-    
     if (mFormSpread.get() != 1)
     {
         formIsSpread = true;
@@ -608,7 +504,6 @@ void PulsarTrain::calculateRanges()
         formRange.setEnd(end);
     }
     else if (mFormSpread.get() == 1)
-
     {
         formIsSpread = false;
     }
@@ -673,5 +568,11 @@ void PulsarTrain::calculateRanges()
     }
     
 
+}
+
+
+PulsaretTable& PulsarTrain::getPulsaretTable()
+{
+    return pulsaret1.getPulsaretTable();
 }
 

@@ -153,12 +153,8 @@ private:
     std::unique_ptr<Attachment>     glideAttachment;
     
     std::unique_ptr<AudioProcessorValueTreeState::ButtonAttachment>     triggerAttachment;
-    
- 
-
+   
     PulsarAudioProcessor& audioProcessor;
-    
-    
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PulsarAudioProcessorEditor)
 };

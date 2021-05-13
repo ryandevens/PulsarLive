@@ -605,9 +605,10 @@ void PulsarAudioProcessorEditor::repaintPulsaret()
 {
     if(audioProcessor.isTrainRunning())
     {
+        DBG("test");
         if(audioProcessor.isFlashing())
         {
-            pulsaretVisualizer.setNewWaveColour(juce::Colours::purple);
+            pulsaretVisualizer.setNewWaveColour(juce::Colours::yellow);
            
             pulsaretVisualizer.setAmp(audioProcessor.getFlashCoef());
             pulsaretVisualizer.repaint();
@@ -629,7 +630,6 @@ void PulsarAudioProcessorEditor::repaintPulsaret()
 
 void PulsarAudioProcessorEditor::timerCallback()
 {
-
     repaintPulsaret();
 
 }

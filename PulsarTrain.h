@@ -11,7 +11,7 @@
 #pragma once
 #include <JuceHeader.h>
 #include "OwnedPulsaret.h"
-#include <pedal/CurvedEnvelope.hpp>
+
 
 
 
@@ -28,15 +28,13 @@ public:
     
     void prepare(double sampleRate);
     void startTrain();
-    void scheduleNextPulsar(); // wait time in between pulsars == period of pulsar == currentTime + pulsarPeriodinSamples
+  
     void triggerPulsaret();
     void generateNextBlock(juce::AudioBuffer<float>& buffer);
     
-    void readPulsaret();
     
     void setFrequencies(float fundFreq, float formFreq, float formFreq2);
-    void setFundamental(float fundFreq);
-    void setFormant(float formFreq);
+
     
     int  getPeriod();
     void checkStatus();
@@ -51,19 +49,14 @@ public:
                       float glide, int trigOn, int trigOff, bool trig, float w, float wSpread, float wRand);
     
     void updateFundamental();
-    void updateFormant();
+
     
     void calculateRanges();
     
-    void updateRanges();
-    
-    float getFlashState();
-    void flipFlashState();
     void setTrigger(int on, int off);
     void setPulsaretParamsAndTrigger();
     void setGlideTime(float glideTime);
-    void setHarmonicFormants(float fund, float form1, float form2);
-    bool getHarmonicModeStatus();
+
     float getFormFreq1();
     float getFormFreq2();
     void setPulsaretWidth(float width);
@@ -71,22 +64,33 @@ public:
     void triggerRelease();
     void setEnv();
     
-    void calcForm();
-    void calcWave();
-    
-    void freePulsarets();
-    
     void triggerPulsaretWithNoAmp();
 
-    // determine if the parameter is "spread"
-    void checkSpreads();
-    
+    PulsaretTable& getPulsaretTable();
+
+    bool trainIsRunning()
+    {
+        return isRunning;
+    }
+
+    bool checkIfFlashing()
+    {
+        return isFlashing.get();
+    }
+
+    float getFlashCoef()
+    {
+        return flashCoef;
+    }
+
 private:
     int tableSize = 1024;
     OwnedPulsaret pulsaret1;
     OwnedPulsaret pulsaret2;
     
-    pedal::CurvedEnvelope   env;
+    juce::ADSR env;
+    juce::ADSR::Parameters envParam;
+
     bool isContinuous = false;
     bool isSingleCycle = true;
     int  flag = 0;
@@ -100,7 +104,8 @@ private:
     
     float pulsaretWidth = 0.1f;
     
-    bool inHarmonicMode = false;
+    float flashCoef = 0.f;
+    bool isRunning = false;
     
     
     int triggerOn = 1;
@@ -113,10 +118,8 @@ private:
     bool trigger;
     
     juce::Random rand;
-    Atomic<float> flashState { 0.f };
+
     Atomic<bool> isFlashing { false };
-    
-    
     
     double mSampleRate;
 

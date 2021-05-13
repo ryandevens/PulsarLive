@@ -54,6 +54,8 @@ public:
     }
     
     juce::AudioBuffer<float>& getEnv();
+
+    PulsaretTable& getPulsaretTable();
     
     PulsaretTable pulsaretTable;
 private:
